@@ -8,7 +8,7 @@ class NetworkStatusDownEvent(Event):
     Network.status.down event
     """
 
-    EVENT_NAME = u'network.status.down'
+    EVENT_NAME = 'network.status.down'
     EVENT_SYSTEM = True
     EVENT_PARAMS = []
 

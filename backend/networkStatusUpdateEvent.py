@@ -10,7 +10,7 @@ class NetworkStatusUpdateEvent(Event):
     Report network interface status
     """
 
-    EVENT_NAME = u'network.status.update'
+    EVENT_NAME = 'network.status.update'
     EVENT_SYSTEM = True
 
     def __init__(self, bus, formatters_broker):
@@ -33,11 +33,12 @@ class NetworkStatusUpdateEvent(Event):
         Return:
             bool: True if params are valid, False otherwise
         """
-        keys = [ 
-            u'interface',
-            u'network',
-            u'ipaddress',
-            u'status'
+        keys = [
+            'type',
+            'interface',
+            'network',
+            'ipaddress',
+            'status'
         ]   
         return all(key in keys for key in params.keys())
 
