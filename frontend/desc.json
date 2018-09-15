@@ -1,0 +1,10 @@
+{
+    "icon": "ethernet",
+    "system": {
+        "services": ["network.service.js"]
+    },
+    "config": {
+        "js": ["network.directive.js"],
+        "html": ["network.directive.html"]
+    }
+}
