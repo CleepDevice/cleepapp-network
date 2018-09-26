@@ -52,10 +52,10 @@ class Network(RaspIotModule):
     MODULE_URL = None
     MODULE_TAGS = ['wireless', 'wifi', 'ethernet']
     MODULE_COUNTRY = None
-    MODULE_URLINFO = None
-    MODULE_URLHELP = None
-    MODULE_URLINFO = None
-    MODULE_URLBUGS = None
+    MODULE_URLINFO = u'https://github.com/tangb/cleepmod-network/wiki'
+    MODULE_URLHELP = u'https://github.com/tangb/cleepmod-network/wiki/Help'
+    MODULE_URLSITE = None
+    MODULE_URLBUGS = u'https://github.com/tangb/cleepmod-network/issues'
 
     STATUS_DISCONNECTED = 0
     STATUS_CONNECTING = 1
