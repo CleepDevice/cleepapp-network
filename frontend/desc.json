@@ -4,7 +4,7 @@
         "services": ["network.service.js"]
     },
     "config": {
-        "js": ["network.directive.js"],
-        "html": ["network.directive.html"]
+        "js": ["network.config.js"],
+        "html": ["network.config.html"]
     }
 }
