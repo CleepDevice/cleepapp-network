@@ -49,7 +49,7 @@ class Network(RaspIotModule):
     MODULE_DEPS = []
     MODULE_DESCRIPTION = u'Configure how your device connect to your network'
     MODULE_LONGDESCRIPTION = u'Application that helps you to configure device network connection'
-    MODULE_LOCKED = True
+    MODULE_CORE = True
     MODULE_URL = None
     MODULE_TAGS = ['wireless', 'wifi', 'ethernet']
     MODULE_COUNTRY = None
