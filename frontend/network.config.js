@@ -11,7 +11,7 @@ var networkConfigDirective = function(toast, networkService, raspiotService) {
     };
 
     return {
-        templateUrl: 'network.directive.html',
+        templateUrl: 'network.config.html',
         replace: true,
         scope: true,
         controller: networkController,
