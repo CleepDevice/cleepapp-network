@@ -1,0 +1,66 @@
+<md-dialog aria-label="Hidden wifi dialog" flex="50">
+    <form ng-cloak>
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>Connect to hidden wifi network</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+                    <md-icon md-svg-icon="close"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+
+        <md-dialog-content>
+                <div class="md-dialog-content" layout="column">
+
+                    <!-- message -->
+                    <div layout="row">
+                        <span>Configure your hidden network here</span>:
+                    </div>
+
+                    <!-- network -->
+                    <div layout="row">
+                        <md-input-container class="md-block" flex-gt-sm>
+                            <label>Network name</label>
+                            <input type="text" ng-model="dialogCtl.newNetwork.network">
+                        </md>
+                    </div>
+
+                    <!-- encryption -->
+                    <div layout="row">
+                        <md-input-container class="md-block" flex-gt-sm>
+                            <label>Network name</label>
+                            <md-select ng-model="dialogCtl.newNetwork.encryption">
+                                <md-option ng-repeat="encryption in dialogCtl.encryptions" value="{{encryption.value}}">{{encryption.label}}</md-option>
+                            </md-select>
+                        </md>
+                    </div>
+
+                    <!-- password -->
+                    <div layout="row">
+                        <md-input-container class="md-block" flex-gt-sm>
+                            <input ng-attr-type="{{dialogCtl.showPassword ? 'text' : 'password'}}" ng-disabled="dialogCtl.newNetwork.encryption=='unsecured'" ng-model="dialogCtl.newNetwork.password" placeholder="password">
+                        </md-input-container>
+                        <div class="padding-row-with-input">
+                            <md-button class="md-icon-button" ng-click="dialogCtl.showPassword=!dialogCtl.showPassword" ng-disabled="dialogCtl.newNetwork.encryption=='unsecured'" aria-label="Show password">
+                                <md-icon md-svg-icon="eye" ng-if="!dialogCtl.showPassword"></md-icon>
+                                <md-icon md-svg-icon="eye-off" ng-if="dialogCtl.showPassword"></md-icon>
+                                <md-tooltip md-direction="left" ng-if="!dialogCtl.showPassword">Show password</md-tooltip>
+                                <md-tooltip md-direction="left" ng-if="dialogCtl.showPassword">Hide password</md-tooltip>
+                            </md-button>
+                        </div>
+                    </div>
+
+                </div>
+        </md-dialog-content>
+
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button ng-click="dialogCtl.validDialog()" aria-label="Connect">
+                <md-icon md-svg-icon="lan-connect"></md-icon>
+                <span>Connect</span>
+            </md-button>
+        </md-dialog-actions>
+
+    </form>
+</md-dialog>

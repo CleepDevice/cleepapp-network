@@ -1,0 +1,48 @@
+<md-dialog aria-label="Wifi connection dialog" flex="50">
+    <form ng-cloak>
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>Wifi connection</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+                    <md-icon md-svg-icon="close"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+
+        <md-dialog-content>
+            <div class="md-dialog-content">
+
+                <!-- message -->
+                <div layout="row">
+                    <span>Set password to connect to {{dialogCtl.selectedNetwork.network}}.</span>
+                </div>
+
+                <!-- password -->
+                <div layout="row">
+                    <md-input-container class="md-block" flex-gt-sm>
+                        <input ng-attr-type="{{dialogCtl.showPassword ? 'text' : 'password'}}" ng-model="dialogCtl.wifiPassword" placeholder="password">
+                    </md-input-container>
+                    <div class="padding-row-with-input">
+                        <md-button class="md-icon-button" ng-click="dialogCtl.showPassword=!dialogCtl.showPassword" aria-label="Show password">
+                            <md-icon md-svg-icon="eye" ng-if="!dialogCtl.showPassword"></md-icon>
+                            <md-icon md-svg-icon="eye-off" ng-if="dialogCtl.showPassword"></md-icon>
+                            <md-tooltip md-direction="left" ng-if="!dialogCtl.showPassword">Show password</md-tooltip>
+                            <md-tooltip md-direction="left" ng-if="dialogCtl.showPassword">Hide password</md-tooltip>
+                        </md-button>
+                    </div>
+                </div>
+
+            </div>
+        </md-dialog-content>
+
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button ng-click="dialogCtl.validDialog()" aria-label="Connect">
+                <md-icon md-svg-icon="lan-connect"></md-icon>
+                <span>Connect</span>
+            </md-button>
+        </md-dialog-actions>
+
+    </form>
+</md-dialog>

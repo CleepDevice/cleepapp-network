@@ -1,0 +1,93 @@
+<md-dialog aria-label="Wifi edit dialog" flex="50">
+    <form ng-cloak>
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>{{dialogCtl.selectedNetwork.network}} network configuration</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+                    <md-icon md-svg-icon="close"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <md-list>
+
+                    <!-- wifi password -->
+                    <div layout="row" style="padding-right: 22px;">
+                        <div flex="50" style="padding-top:15px; padding-left:15px;">
+                            <span>
+                                Change password
+                            </span>
+                            <span class="md-caption" ng-if="dialogCtl.selectedNetwork.config.encryption=='unsecured'">
+                                (disabled on unsecured network)
+                            </span>
+                        </div>
+                        <md-input-container flex="35" class="md-block" md-no-float style="margin:0px 0;">
+                            <input ng-attr-type="{{dialogCtl.showPassword ? 'text' : 'password'}}" placeholder="password" ng-model="dialogCtl.wifiPassword" 
+                            ng-disabled="dialogCtl.selectedNetwork.config.encryption=='unsecured'" aria-label="password">
+                        </md-input-container>
+                        <div flex="5" "padding-row-with-input">
+                            <md-button class="md-icon-button" ng-click="dialogCtl.showPassword=!dialogCtl.showPassword" aria-label="Show password"
+                            ng-disabled="dialogCtl.selectedNetwork.config.encryption=='unsecured'">
+                                <md-icon md-svg-icon="eye" ng-if="!dialogCtl.showPassword"></md-icon>
+                                <md-icon md-svg-icon="eye-off" ng-if="dialogCtl.showPassword"></md-icon>
+                                <md-tooltip md-direction="left" ng-if="!dialogCtl.showPassword">Show password</md-tooltip>
+                                <md-tooltip md-direction="left" ng-if="dialogCtl.showPassword">Hide password</md-tooltip>
+                            </md-button>
+                        </div>
+                        <div flex="10">
+                            <md-button ng-click="dialogCtl.changeWifiPassword()" aria-label="Change passord" ng-disabled="dialogCtl.selectedNetwork.config.encryption=='unsecured'">
+                                <md-icon md-svg-icon="pencil"></md-icon>
+                                Change
+                            </md-button>
+                        </div>
+                    </div>
+
+                    <!-- disable/enable network -->
+                    <md-list-item class="md-2-line">
+                        <div class="md-list-item-text" layout="column">
+                            <h3>Enable/disable network</h3>
+                            <p>Device won't connect to this network but configuration is kept</p>
+                        </div>
+                        <md-button class="md-secondary" ng-if="!dialogCtl.selectedNetwork.config.disabled" ng-click="dialogCtl.disableWifiNetwork()">
+                            <md-icon md-svg-icon="sleep"></md-icon>
+                            Disable
+                        </md-button>
+                        <md-button class="md-secondary" ng-if="dialogCtl.selectedNetwork.config.disabled" ng-click="dialogCtl.enableWifiNetwork()">
+                            <md-icon md-svg-icon="sleep-off"></md-icon>
+                            Enable
+                        </md-button>
+                    </md-list-item>
+
+                    <!-- reconfigure network -->
+                    <md-list-item class="md-2-line">
+                        <div class="md-list-item-text" layout="column">
+                            <h3>Reconfigure network</h3>
+                            <p>In case of trouble try network reconfiguration</p>
+                        </div>
+                        <md-button class="md-secondary md-accent" ng-click="dialogCtl.reconfigureWifiNetwork()">
+                            <md-icon md-svg-icon="settings"></md-icon>
+                            Reconfigure
+                        </md-button>
+                    </md-list-item>
+
+                    <!-- delete network -->
+                    <md-list-item class="md-2-line">
+                        <div class="md-list-item-text" layout="column">
+                            <h3>Forget network configuration</h3>
+                            <p>Network configuration is deleted forever</p>
+                        </div>
+                        <md-button class="md-secondary md-accent" ng-click="dialogCtl.forgetWifiNetwork()">
+                            <md-icon md-svg-icon="delete"></md-icon>
+                            Forget
+                        </md-button>
+                    </md-list-item>
+
+                </md-list>
+            </div>
+        </md-dialog-content>
+
+    </form>
+</md-dialog>

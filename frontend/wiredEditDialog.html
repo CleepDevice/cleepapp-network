@@ -1,0 +1,63 @@
+<md-dialog aria-label="Wired edit dialog" flex="50">
+    <form ng-cloak>
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>Edit wired connection</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+                    <md-icon md-svg-icon="close"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+
+        <md-dialog-content>
+            <div class="md-dialog-content">
+
+                <!-- dhcp -->
+                <md-input-container class="md-block">
+                    <label>Mode</label>
+                    <md-select name="dhcp" ng-model="dialogCtl.newConfig.dhcp" required>
+                        <md-option ng-value="true">Automatic</md-option>
+                        <md-option ng-value="false">Manual (expert mode)</md-option>
+                    </md-select>
+                </md-input-container>
+
+                <!-- wired auto -->
+                <md-input-container class="md-block" ng-if="dialogCtl.newConfig.dhcp" flex-gt-sm>
+                    <span>Your network will automatically assign an ip address to your device.</span>
+                </md-input-container> 
+
+                <!-- wired static -->
+                <md-input-container class="md-block" ng-if="!dialogCtl.newConfig.dhcp" flex-gt-sm>
+                    <label>Ip address</label>
+                    <input ng-model="dialogCtl.newConfig.ipv4">
+                </md-input-container>
+                <md-input-container class="md-block" ng-if="!dialogCtl.newConfig.dhcp" flex-gt-sm>
+                    <label>Gateway address</label>
+                    <input ng-model="dialogCtl.newConfig.gateway_ipv4">
+                </md-input-container>
+                <md-input-container class="md-block" ng-if="!dialogCtl.newConfig.dhcp" flex-gt-sm>
+                    <label>Netmask</label>
+                    <input ng-model="dialogCtl.newConfig.netmask_ipv4">
+                </md-input-container>
+                <!--<div class="padding-row-with-input" ng-if="dialogCtl.newConfig.mode!='dhcp'">
+                    <md-checkbox ng-model="interface.fallback">
+                        Fallback ip
+                    </md-checkbox>
+                </div>-->
+
+            </div>
+        </md-dialog-content>
+
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+                <span>Cancel</span>
+            </md-button>
+            <md-button ng-click="dialogCtl.validDialog()" aria-label="Valid dialog">
+                <span>Save</span>
+            </md-button>
+        </md-dialog-actions>
+
+    </form>
+</md-dialog>
