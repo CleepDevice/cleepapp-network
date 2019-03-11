@@ -1,7 +1,7 @@
 {
     "icon": "ethernet",
-    "system": {
-        "services": ["network.service.js"]
+    "global": {
+        "js": ["network.service.js"]
     },
     "config": {
         "js": ["network.config.js"],
