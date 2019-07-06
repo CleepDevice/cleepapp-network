@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from raspiot.events.event import Event
+from raspiot.libs.internals.event import Event
 
 class NetworkStatusUpdateEvent(Event):
     """
