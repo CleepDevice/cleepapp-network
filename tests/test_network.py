@@ -11,7 +11,7 @@ from raspiot.libs.tests import session
 class TestNetwork(unittest.TestCase):
 
     def setUp(self):
-        self.session = session.Session(logging.CRITICAL)
+        self.session = session.TestSession(logging.CRITICAL)
         #next line instanciates your module, overwriting all useful stuff to isolate your module for tests
         self.module = self.session.setup(Network)
 
