@@ -4,27 +4,29 @@ import unittest
 import logging
 import sys
 sys.path.append('../')
-from backend.network import Network
-from raspiot.utils import InvalidParameter, MissingParameter, CommandError, Unauthorized
-from raspiot.libs.tests import session
+from backend.system import System
+from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized, CommandInfo
+from cleep.libs.tests import session
+from mock import Mock, patch, MagicMock
 
-class TestNetwork(unittest.TestCase):
+class TestSystem(unittest.TestCase):
 
     def setUp(self):
-        self.session = session.TestSession(logging.CRITICAL)
-        #next line instanciates your module, overwriting all useful stuff to isolate your module for tests
-        self.module = self.session.setup(Network)
+        self.session = session.TestSession()
+        logging.basicConfig(level=logging.FATAL, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
 
     def tearDown(self):
-        #clean session
         self.session.clean()
 
-    #write your tests here defining functions starting with test_
-    #see official documentation https://docs.python.org/2.7/library/unittest.html
-    #def test_my_test(self):
-    #   ...
+    def init_session(self, start_module=True):
+        self.module = self.session.setup(System)
+        if start_module:
+            self.session.start_module(self.module)
 
-#do not remove code below, otherwise test won't run
+    def test_configure(self):
+        self.init_session(start_module=False)
+
 if __name__ == '__main__':
+    # coverage run --omit="*lib/python*/*","test_*" --concurrency=thread test_network.py; coverage report -m -i
     unittest.main()
     

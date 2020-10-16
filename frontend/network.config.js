@@ -1,8 +1,8 @@
 /**
- * Network config directive
+ * Network config Component
  * Handle network configuration
  */
-var networkConfigDirective = function($rootScope, raspiotService, networkService, toast, confirm, $mdDialog) {
+var networkConfigComponent = function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
 
     var networkController = ['$scope', function($scope) {
         var self = this;
@@ -463,7 +463,7 @@ var networkConfigDirective = function($rootScope, raspiotService, networkService
         self.init = function()
         {
             //load config
-            raspiotService.getModuleConfig('network')
+            cleepService.getModuleConfig('network')
                 .then(function(config) {
                     self.__updateConfig(config);
                 })
@@ -502,5 +502,6 @@ var networkConfigDirective = function($rootScope, raspiotService, networkService
     };
 };
 
-var RaspIot = angular.module('RaspIot');
-RaspIot.directive('networkConfigDirective', ['$rootScope', 'raspiotService', 'networkService', 'toastService', 'confirmService', '$mdDialog', networkConfigDirective])
+var Cleep = angular.module('Cleep');
+Cleep.directive('networkConfigComponent', ['$rootScope', 'cleepService', 'networkService', 'toastService', 'confirmService', '$mdDialog', networkConfigComponent])
+

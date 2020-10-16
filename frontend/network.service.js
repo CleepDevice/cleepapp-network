@@ -2,7 +2,7 @@
  * Network service
  * Handle network module requests
  */
-var networkService = function($q, $rootScope, rpcService, raspiotService) {
+var networkService = function($q, $rootScope, rpcService, cleepService) {
     var self = this;
 
     self.saveWiredStaticConfiguration = function(interface, ipAddress, gateway, netmask, fallback) {
@@ -63,7 +63,7 @@ var networkService = function($q, $rootScope, rpcService, raspiotService) {
         return rpcService.sendCommand('reconfigure_wired_interface', 'network', {'interface':interface}, 30)
             .then(function(resp) {
                 //reload module config
-                return raspiotService.reloadModuleConfig('network');
+                return cleepService.reloadModuleConfig('network');
             })
             .then(function(config) {
                 return config;
@@ -75,7 +75,7 @@ var networkService = function($q, $rootScope, rpcService, raspiotService) {
         return rpcService.sendCommand('refresh_wifi_networks', 'network', null, 30)
             .then(function(resp) {
                 //reload module config
-                return raspiotService.reloadModuleConfig('network')
+                return cleepService.reloadModuleConfig('network')
             })
             .then(function(config) {
                 return config;
@@ -83,6 +83,6 @@ var networkService = function($q, $rootScope, rpcService, raspiotService) {
     };
 };
     
-var RaspIot = angular.module('RaspIot');
-RaspIot.service('networkService', ['$q', '$rootScope', 'rpcService', 'raspiotService', networkService]);
+var Cleep = angular.module('Cleep');
+Cleep.service('networkService', ['$q', '$rootScope', 'rpcService', 'cleepService', networkService]);
 
