@@ -4,7 +4,7 @@ import unittest
 import logging
 import sys
 sys.path.append('../')
-from backend.system import System
+from backend.network import Network
 from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized, CommandInfo
 from cleep.libs.tests import session
 from mock import Mock, patch, MagicMock
@@ -19,12 +19,12 @@ class TestSystem(unittest.TestCase):
         self.session.clean()
 
     def init_session(self, start_module=True):
-        self.module = self.session.setup(System)
+        self.module = self.session.setup(Network)
         if start_module:
             self.session.start_module(self.module)
 
     def test_configure(self):
-        self.init_session(start_module=False)
+        self.init_session(start_module=True)
 
 if __name__ == '__main__':
     # coverage run --omit="*lib/python*/*","test_*" --concurrency=thread test_network.py; coverage report -m -i
