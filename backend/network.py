@@ -2,7 +2,7 @@
 #  -*- coding: utf-8 -*-
 
 import time
-from cleep.exception import InvalidParameter, MissingParameter, CommandError
+from cleep.exception import CommandError
 from cleep.core import CleepModule
 from cleep.libs.configs.wpasupplicantconf import WpaSupplicantConf
 from cleep.libs.configs.dhcpcdconf import DhcpcdConf
@@ -267,7 +267,7 @@ class Network(CleepModule):
 
         Returns:
             dict: configured interfaces::
-            
+
             {
                 interface name (string): {
                     interface (string): interface name,
@@ -512,7 +512,7 @@ class Network(CleepModule):
             interface_name (string): network interface name
         """
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str }
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
         ])
 
         self.ifupdown.restart_interface(interface_name)
@@ -530,11 +530,11 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
-            { 'name': 'ip_address', 'value': ip_address, 'type': str },
-            { 'name': 'gateway', 'value': gateway, 'type': str },
-            { 'name': 'netmask', 'value': netmask, 'type': str },
-            { 'name': 'fallback', 'value': fallback, 'type': bool },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
+            {'name': 'ip_address', 'value': ip_address, 'type': str},
+            {'name': 'gateway', 'value': gateway, 'type': str},
+            {'name': 'netmask', 'value': netmask, 'type': str},
+            {'name': 'fallback', 'value': fallback, 'type': bool},
         ])
 
         # add new one
@@ -588,7 +588,7 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
         ])
 
         if self.dhcpcd.is_installed():
@@ -633,7 +633,7 @@ class Network(CleepModule):
                 'status': self.STATUS_DISCONNECTED,
                 'ipaddress': None,
             }
-        
+
         # status
         old_status = self.network_status[interface_name]['status']
         current_status = self.wpacli.get_status(interface_name)
@@ -807,9 +807,14 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
-            { 'name': 'network_name', 'value': network_name, 'type': str },
-            { 'name': 'encryption', 'value': encryption, 'type': str, 'validator': lambda val: val in WpaSupplicantConf.ENCRYPTION_TYPES },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
+            {'name': 'network_name', 'value': network_name, 'type': str},
+            {
+                'name': 'encryption',
+                'value': encryption,
+                'type': str,
+                'validator': lambda val: val in WpaSupplicantConf.ENCRYPTION_TYPES,
+            },
         ])
 
         # save config in wpa_supplicant.conf file
@@ -835,8 +840,8 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
-            { 'name': 'network_name', 'value': network_name, 'type': str },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
+            {'name': 'network_name', 'value': network_name, 'type': str},
         ])
 
         if not self.wpasupplicant.delete_network(network_name, interface=interface_name):
@@ -862,9 +867,9 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
-            { 'name': 'network_name', 'value': network_name, 'type': str },
-            { 'name': 'password', 'value': password, 'type': str },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
+            {'name': 'network_name', 'value': network_name, 'type': str},
+            {'name': 'password', 'value': password, 'type': str},
         ])
 
         if not self.wpasupplicant.update_network_password(network_name, password, interface=interface_name):
@@ -889,8 +894,8 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
-            { 'name': 'network_name', 'value': network_name, 'type': str },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
+            {'name': 'network_name', 'value': network_name, 'type': str},
         ])
 
         if not self.wpasupplicant.enable_network(network_name, interface=interface_name):
@@ -915,8 +920,8 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str },
-            { 'name': 'network_name', 'value': network_name, 'type': str },
+            {'name': 'interface_name', 'value': interface_name, 'type': str},
+            {'name': 'network_name', 'value': network_name, 'type': str},
         ])
 
         if not self.wpasupplicant.disable_network(network_name, interface=interface_name):
@@ -937,7 +942,12 @@ class Network(CleepModule):
         """
         # check params
         self._check_parameters([
-            { 'name': 'interface_name', 'value': interface_name, 'type': str, 'validator': lambda val: val in self.wifi_interfaces },
+            {
+                'name': 'interface_name',
+                'value': interface_name,
+                'type': str,
+                'validator': lambda val: val in self.wifi_interfaces
+            },
         ])
         # if interface not in self.wifi_interfaces.keys():
         #    raise InvalidParameter('Interface %s does\t exist or is not configured' % interface)
