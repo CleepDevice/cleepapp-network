@@ -2,65 +2,126 @@
  * Network service
  * Handle network module requests
  */
-var networkService = function($q, $rootScope, rpcService, cleepService) {
+angular
+.module('Cleep')
+.service('networkService', ['$q', '$rootScope', 'rpcService', 'cleepService',
+function($q, $rootScope, rpcService, cleepService) {
     var self = this;
 
     self.saveWiredStaticConfiguration = function(interface, ipAddress, gateway, netmask, fallback) {
-        return rpcService.sendCommand('save_wired_static_configuration', 'network', {'interface':interface, 'ip_address':ipAddress, 'gateway':gateway, 'netmask':netmask, 'fallback':fallback});
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand(
+            'save_wired_static_configuration',
+            'network',
+            {
+                'interface_name': interface,
+                'ip_address': ipAddress,
+                'gateway': gateway,
+                'netmask': netmask,
+                'fallback': fallback
+            }
+        );
     };
 
     self.saveWiredDhcpConfiguration = function(interface) {
-        return rpcService.sendCommand('save_wired_dhcp_configuration', 'network', {'interface':interface});
-    };
-
-    self.testWifiNetwork = function(interface, network, password, encryption, hidden) {
-        return rpcService.sendCommand('test_wifi_network', 'network', {'interface':interface, 'network':network, 'encryption':encryption, 'password':password, 'hidden':hidden}, 60);
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand('save_wired_dhcp_configuration', 'network', {'interface_name':interface});
     };
 
     self.saveWifiNetwork = function(interface, network, password, encryption, hidden) {
-        return rpcService.sendCommand('save_wifi_network', 'network', {'interface':interface, 'network':network, 'encryption':encryption, 'password':password, 'hidden':hidden}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand(
+            'save_wifi_network_configuration',
+            'network', {
+                'interface_name': interface,
+                'network_name': network,
+                'encryption': encryption,
+                'password': password,
+                'hidden': hidden,
+            },
+            30,
+        )
             .then(function() {
                 return self.refreshWifiNetworks();
             });
     };
 
     self.deleteWifiNetwork = function(interface, network) {
-        return rpcService.sendCommand('delete_wifi_network', 'network', {'interface':interface, 'network':network}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand(
+            'delete_wifi_network_configuration',
+            'network',
+            {
+                'interface_name': interface,
+                'network_name': network,
+            },
+            30,
+        )
             .then(function() {
                 return self.refreshWifiNetworks();
             });
     };
 
     self.enableWifiNetwork = function(interface, network) {
-        return rpcService.sendCommand('enable_wifi_network', 'network', {'interface':interface, 'network':network}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand(
+            'enable_wifi_network',
+            'network',
+            {
+                'interface_name': interface,
+                'network_name': network,
+            },
+            30,
+        )
             .then(function(resp) {
                 return self.refreshWifiNetworks();
             });
     };
 
     self.disableWifiNetwork = function(interface, network) {
-        return rpcService.sendCommand('disable_wifi_network', 'network', {'interface':interface, 'network':network}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand(
+            'disable_wifi_network',
+            'network',
+            {
+                'interface_name': interface,
+                'network_name': network,
+            },
+            30,
+        )
             .then(function(resp) {
                 return self.refreshWifiNetworks();
             });
     };
 
     self.updateWifiNetworkPassword = function(interface, network, password) {
-        return rpcService.sendCommand('update_wifi_network_password', 'network', {'interface':interface, 'network':network, 'password':password}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand(
+            'update_wifi_network_password',
+            'network',
+            {
+                'interface_name': interface,
+                'network_name': network,
+                'password': password,
+            },
+            30,
+        )
             .then(function(resp) {
                 return self.refreshWifiNetworks();
             });
     };
 
     self.reconfigureWifiNetwork = function(interface) {
-        return rpcService.sendCommand('reconfigure_wifi_interface', 'network', {'interface':interface}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand('reconfigure_wifi_interface', 'network', {'interface_name': interface}, 30)
             .then(function(resp) {
                 return self.refreshWifiNetworks();
             });
     };
 
     self.reconfigureWiredNetwork = function(interface) {
-        return rpcService.sendCommand('reconfigure_wired_interface', 'network', {'interface':interface}, 30)
+        self.enableActiveNetworkScan();
+        return rpcService.sendCommand('reconfigure_wired_interface', 'network', {'interface_name': interface}, 30)
             .then(function(resp) {
                 //reload module config
                 return cleepService.reloadModuleConfig('network');
@@ -81,8 +142,13 @@ var networkService = function($q, $rootScope, rpcService, cleepService) {
                 return config;
             });
     };
-};
-    
-var Cleep = angular.module('Cleep');
-Cleep.service('networkService', ['$q', '$rootScope', 'rpcService', 'cleepService', networkService]);
 
+    self.enableActiveNetworkScan = function() {
+        return rpcService.sendCommand('enable_active_network_scan', 'network');
+    };
+
+    self.disableActiveNetworkScan = function() {
+        return rpcService.sendCommand('disable_active_network_scan', 'network');
+    };
+}]);
+ 

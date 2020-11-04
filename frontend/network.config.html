@@ -4,46 +4,46 @@
 
         <!-- wired connections -->
         <md-subheader class="md-no-sticky">Wired connections</md-subheader>
-        <md-list-item ng-click="networkCtl.showConfig(network, 'wired')" ng-repeat="network in networkCtl.networks | filter: {wifi:false}">
+        <md-list-item ng-click="networkCtl.showConfig(network, 'wired', $event)" ng-repeat="network in networkCtl.config.networks | filter: {wifi:false}">
             <md-icon md-svg-icon="ethernet"></md-icon>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===2">Ethernet: connected with ip address {{networkCtl.networkStatus[network.interface].ipaddress}}</p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status!==2">Ethernet: not connected</p>
-            <md-button class="md-secondary md-raised md-primary" ng-click="networkCtl.editWiredConfig(network)" ng-disabled="networkCtl.loading">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===2">Ethernet: connected with ip address {{networkCtl.config.networkstatus[network.interface].ipaddress}}</p>
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status!==2">Ethernet: not connected</p>
+            <md-button class="md-secondary md-raised" ng-click="networkCtl.editWiredConfig(network, $event)" ng-disabled="networkCtl.loading">
                 <md-icon md-svg-icon="pencil"></md-icon>
                 Configure
             </md-button>
         </md-list-item>
 
         <!-- wifi connections -->
-        <div ng-repeat="interface in networkCtl.wifiInterfaces">
+        <div ng-repeat="interface in networkCtl.config.wifiinterfaces">
         <md-subheader class="md-no-sticky">
             <span>Wifi connections</span>
-            <span ng-if="networkCtl.wifiInterfaces.length>1">on wifi adapter #{{$index}} ({{interface}})</span>
+            <span ng-if="networkCtl.config.wifiinterfaces.length>1">on wifi adapter #{{$index}} ({{interface}})</span>
         </md-subheader>
-        <md-list-item ng-click="networkCtl.showConfig(network, 'wifi')" ng-repeat="network in networkCtl.networks | filter: {wifi:true, interface:interface}">
+        <md-list-item ng-click="networkCtl.showConfig(network, 'wifi', $event)" ng-repeat="network in networkCtl.config.networks | filter: {wifi:true, interface:interface}">
             <md-icon md-svg-icon="wifi"></md-icon>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===3 && networkCtl.networkStatus[network.interface].network===network.network">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===3 && networkCtl.config.networkstatus[network.interface].network===network.network">
                 {{network.network}}: unable to connect, invalid password
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===3 && networkCtl.networkStatus[network.interface].network!==network.network">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===3 && networkCtl.config.networkstatus[network.interface].network!==network.network">
                 {{network.network}}: not connected
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===2 && networkCtl.networkStatus[network.interface].network===network.network && networkCtl.networkStatus[network.interface].ipaddress">
-                {{network.network}}: connected with ip address {{networkCtl.networkStatus[network.interface].ipaddress}}
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===2 && networkCtl.config.networkstatus[network.interface].network===network.network && networkCtl.config.networkstatus[network.interface].ipaddress">
+                {{network.network}}: connected with ip address {{networkCtl.config.networkstatus[network.interface].ipaddress}}
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===2 && networkCtl.networkStatus[network.interface].network===network.network && !networkCtl.networkStatus[network.interface].ipaddress">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===2 && networkCtl.config.networkstatus[network.interface].network===network.network && !networkCtl.config.networkstatus[network.interface].ipaddress">
                 {{network.network}}: connected
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===2 && networkCtl.networkStatus[network.interface].network!==network.network">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===2 && networkCtl.config.networkstatus[network.interface].network!==network.network">
                 {{network.network}}: not connected
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===1">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===1">
                 {{network.network}}: connecting...
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===0">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===0 && !network.config.disabled">
                 {{network.network}}: not connected
             </p>
-            <p ng-if="networkCtl.networkStatus[network.interface].status===0 && network.config.disabled">
+            <p ng-if="networkCtl.config.networkstatus[network.interface].status===0 && network.config.disabled">
                 {{network.network}}: not connected (disabled)
             </p>
             <md-button class="md-icon-button" ng-if="network.config.hidden" aria-label="Hidden network" ng-disabled="networkCtl.loading">
@@ -65,11 +65,23 @@
                 <md-icon ng-if="network.config.signallevel>75" md-svg-icon="wifi-strength-4"></md-icon>
                 <md-tooltip md-direction="left">{{network.config.signallevel}}% signal level</md-tooltip>
             </md-button>
-            <md-button class="md-secondary md-raised md-primary" ng-if="!network.config.configured" ng-click="networkCtl.connectWifiNetwork(network)" aria-label="Connect to network" ng-disabled="networkCtl.loading">
+            <md-button
+                class="md-secondary md-raised"
+                ng-if="!network.config.configured"
+                ng-click="networkCtl.connectWifiNetwork(network, $event)"
+                aria-label="Connect to network"
+                ng-disabled="networkCtl.loading"
+            >
                 <md-icon md-svg-icon="lan-connect"></md-icon>
                 <span>Connect</span>
             </md-button>
-            <md-button class="md-secondary md-raised md-primary" ng-if="network.config.configured" ng-click="networkCtl.editWifiConfig(network)" aria-label="Configure network" ng-disabled="networkCtl.loading">
+            <md-button
+                class="md-secondary md-raised"
+                ng-if="network.config.configured"
+                ng-click="networkCtl.editWifiConfig(network, $event)"
+                aria-label="Configure network"
+                ng-disabled="networkCtl.loading"
+            >
                 <md-icon md-svg-icon="pencil"></md-icon>
                 <span>Configure</span>
             </md-button>
@@ -79,13 +91,13 @@
         <!-- wifi actions -->
         <md-list-item style="padding-top:10px;">
             <div class="md-secondary">
-                <md-button class="md-raised md-primary" ng-click="networkCtl.addHiddenWifiNetwork()" ng-disabled="networkCtl.loading">
+                <md-button class="md-raised md-primary" ng-click="networkCtl.addHiddenWifiNetwork($event)" ng-disabled="networkCtl.loading">
                     <md-icon md-svg-icon="plus"></md-icon>
                     Connect to hidden network
                 </md-button>
                 <md-button class="md-raised md-primary" ng-click="networkCtl.refreshWifiNetworks()" ng-disabled="networkCtl.loading">
                     <md-icon md-svg-icon="refresh"></md-icon>
-                    <md-tooltip md-direction="top">Last update {{networkCtl.lastWifiScan | hrDatetime}}</md-tooltip>
+                    <md-tooltip md-direction="top">Last update {{networkCtl.config.lastwifiscan | hrDatetime}}</md-tooltip>
                     Scan wifi networks
                 </md-button>
             </div>

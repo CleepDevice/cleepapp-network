@@ -9,6 +9,7 @@ from cleep.libs.configs.dhcpcdconf import DhcpcdConf
 from cleep.libs.configs.etcnetworkinterfaces import EtcNetworkInterfaces
 from cleep.libs.commands.ifconfig import Ifconfig
 from cleep.libs.commands.iw import Iw
+from cleep.libs.commands.ip import Ip
 from cleep.libs.commands.iwlist import Iwlist
 from cleep.libs.commands.iwconfig import Iwconfig
 from cleep.libs.commands.ifupdown import Ifupdown
@@ -16,6 +17,7 @@ from cleep.libs.commands.wpacli import Wpacli
 from cleep.libs.configs.cleepwificonf import CleepWifiConf
 from cleep.libs.internals.task import Task
 import netifaces
+from threading import Timer
 
 __all__ = ['Network']
 
@@ -62,6 +64,9 @@ class Network(CleepModule):
     TYPE_WIRED = 'wired'
     TYPE_WIFI = 'wifi'
 
+    NETWORK_SCAN_DURATION = 60
+    ACTIVE_SCAN_TIMEOUT = 10 * 60
+
     def __init__(self, bus, debug_enabled):
         """
         Constructor
@@ -82,6 +87,7 @@ class Network(CleepModule):
         self.ifconfig = Ifconfig()
         self.iwconfig = Iwconfig()
         self.ifupdown = Ifupdown()
+        self.ip = Ip()
         self.wpacli = Wpacli()
         self.cleepwifi = CleepWifiConf()
 
@@ -94,6 +100,8 @@ class Network(CleepModule):
         self.last_wifi_networks_scan = 0
         self.__network_watchdog_task = None
         self.__network_is_down = True
+        self.__network_scan_duration = Network.NETWORK_SCAN_DURATION
+        self.__network_scan_duration_timer = None
 
         # events
         self.network_up_event = self._get_event('network.status.up')
@@ -103,6 +111,12 @@ class Network(CleepModule):
     def _configure(self):
         """
         Module start
+        """
+        pass
+
+    def _on_start(self):
+        """
+        Module is started
         """
         # refresh list of wifi networks
         try:
@@ -122,10 +136,6 @@ class Network(CleepModule):
             finally:
                 self.cleepwifi.delete(self.cleep_filesystem)
 
-    def _on_start(self):
-        """
-        Module is started
-        """
         # launch network watchdog
         self.__network_watchdog_task = Task(1.0, self._check_network_connection, self.logger)
         self.__network_watchdog_task.start()
@@ -136,6 +146,8 @@ class Network(CleepModule):
         """
         if self.__network_watchdog_task:
             self.__network_watchdog_task.stop()
+        if self.__network_scan_duration_timer:
+            self.__network_scan_duration_timer.cancel()
 
     def _load_cleep_wifi_conf(self):
         """
@@ -409,12 +421,50 @@ class Network(CleepModule):
             self.logger.debug('Received country update event: %s' % event)
             self.wpasupplicant.set_country(event['params']['country'])
 
+    def enable_active_network_scan(self):
+        """
+        Enable active network scan. It means application will scan every seconds network
+        connectivity.
+        
+        As it consumes device ressources, this feature will be automatically
+        disabled after configured amount of time. It can be disabled manually calling
+        disable_active_network_scan.
+        """
+        self.logger.debug('Enable active network scan')
+        self.__network_scan_duration = 1
+
+        if self.__network_scan_duration_timer:
+            self.__network_scan_duration_timer.cancel()
+
+        self.__network_scan_duration_timer = Timer(Network.ACTIVE_SCAN_TIMEOUT, self.disable_active_network_scan)
+        self.__network_scan_duration_timer.daemon = True
+        self.__network_scan_duration_timer.name = 'network_scan_duration_timer'
+        self.__network_scan_duration_timer.start()
+
+    def disable_active_network_scan(self):
+        """
+        Disable active network scan
+        """
+        self.logger.debug('Disable active network scan')
+        if self.__network_scan_duration_timer:
+            self.__network_scan_duration_timer.cancel()
+            self.__network_scan_duration_timer = None
+
+        self.__network_scan_duration = Network.NETWORK_SCAN_DURATION
+
     def _check_network_connection(self):
         """
         Check network connection sending event when network is up or down
 
         It also monitor wifi network status (disconnected/connected/invalid password)
         """
+        # Performance optimization: do not check network connection each seconds all the time.
+        # To reduce scan frequency frontend enables active scan (each seconds) when user loads network
+        # config page and this for a configured duration. After this time, scan durations returns
+        # to its optimized value NETWORK_SCAN_DURATION
+        if self.network_status and int(time.time()) % self.__network_scan_duration != 0:
+            return
+
         # init
         wifi_interfaces = self.iwconfig.get_interfaces()
         connected = False
@@ -435,10 +485,10 @@ class Network(CleepModule):
             # update interface status
             if interface_name in wifi_interfaces:
                 # wireless interface
-                self._check_wifi_interface_status(interface_name, addresses)
+                self._check_wifi_interface_status(interface_name)
             else:
                 # ethernet interface
-                self._check_wired_interface_status(interface_name)
+                self._check_wired_interface_status(interface_name, addresses)
 
         # handle network connection status
         if connected and self.__network_is_down:
@@ -515,7 +565,10 @@ class Network(CleepModule):
             {'name': 'interface_name', 'value': interface_name, 'type': str},
         ])
 
-        self.ifupdown.restart_interface(interface_name)
+        if self.dhcpcd.is_installed():
+            self.ip.restart_interface(interface_name)
+        else:
+            self.ifupdown.restart_interface(interface_name)
 
     def save_wired_static_configuration(self, interface_name, ip_address, gateway, netmask, fallback):
         """
@@ -643,6 +696,9 @@ class Network(CleepModule):
         if current_status['state'] == Wpacli.STATE_COMPLETED and current_status['ipaddress'] is not None:
             # wait before setting connected status while ip is not attributed (can take sometime to get ip)
             wifi_status = self.STATUS_CONNECTED
+        elif current_status['state'] == Wpacli.STATE_COMPLETED and current_status['ipaddress'] is None:
+            # connection is completed but there is no ip yet
+            wifi_status = self.STATUS_CONNECTING
         elif current_status['state'] in (Wpacli.STATE_4WAY_HANDSHAKE, Wpacli.STATE_GROUP_HANDSHAKE):
             wifi_status = self.STATUS_WIFI_INVALID_PASSWORD
         elif current_status['state'] in (
@@ -654,6 +710,11 @@ class Network(CleepModule):
         else:
             wifi_status = self.STATUS_DISCONNECTED
         self.logger.trace('Wifi status: %s' % wifi_status)
+
+        # force status to invalid password because network try to connect again after a while
+        # and we want to keep status that password was invalid
+        if old_status == self.STATUS_WIFI_INVALID_PASSWORD and wifi_status == self.STATUS_CONNECTING:
+            wifi_status = self.STATUS_WIFI_INVALID_PASSWORD
 
         # update current network status
         self.network_status[interface_name].update({
@@ -949,13 +1010,6 @@ class Network(CleepModule):
                 'validator': lambda val: val in self.wifi_interfaces
             },
         ])
-        # if interface not in self.wifi_interfaces.keys():
-        #    raise InvalidParameter('Interface %s does\t exist or is not configured' % interface)
-
-        # restart network interface
-        if not self.ifupdown.restart_interface(interface_name):
-            return False
-
         # reconfigure interface
         return self.wpacli.reconfigure_interface(interface_name)
 

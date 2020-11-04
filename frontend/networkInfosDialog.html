@@ -16,7 +16,7 @@
             <div class="md-dialog-content" ng-if="!dialogCtl.selectedNetwork.wifi">
 
                 <!-- connection infos -->
-                <md-list ng-cloak ng-if="dialogCtl.networkStatus[dialogCtl.selectedNetwork.interface].status===2">
+                <md-list ng-cloak ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status===2">
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">IP address:</span>
                         {{dialogCtl.selectedNetwork.status.ipv4}}
@@ -36,7 +36,7 @@
                 </md-list>
 
                 <!-- not connected -->
-                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="dialogCtl.networkStatus[dialogCtl.selectedNetwork.interface].status!==2">
+                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status!==2">
                     <div>
                         <md-icon md-svg-icon="cancel"></md-icon>
                         <span>Not connected</span>
@@ -48,7 +48,7 @@
             <div class="md-dialog-content" ng-if="dialogCtl.selectedNetwork.wifi">
 
                 <!-- wifi connection infos -->
-                <md-list ng-cloak ng-if="dialogCtl.networkStatus[dialogCtl.selectedNetwork.interface].status===2 && dialogCtl.networkStatus[dialogCtl.selectedNetwork.interface].network==dialogCtl.selectedNetwork.network">
+                <md-list ng-cloak ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status===2 && dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].network==dialogCtl.selectedNetwork.network">
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">IP address:</span>
                         {{dialogCtl.selectedNetwork.status.ipv4}}
@@ -65,10 +65,14 @@
                         <span class="md-body-2" style="padding-right:10px;">Netmask:</span>
                         {{dialogCtl.selectedNetwork.status.netmask_ipv4}}
                     </md-list-item>
+                    <md-list-item>
+                        <span class="md-body-2" style="padding-right:10px;">Interface:</span>
+                        {{dialogCtl.selectedNetwork.status.interface}}
+                    </md-list-item>
                 </md-list>
 
                 <!-- not connected -->
-                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="dialogCtl.networkStatus[dialogCtl.selectedNetwork.interface].status!==2 || dialogCtl.networkStatus[dialogCtl.selectedNetwork.interface].network!=dialogCtl.selectedNetwork.network">
+                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status!==2 || dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].network!=dialogCtl.selectedNetwork.network">
                     <div>
                         <md-icon md-svg-icon="cancel"></md-icon>
                         <span>Not connected</span>
