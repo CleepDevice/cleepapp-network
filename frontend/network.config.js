@@ -508,7 +508,6 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
          * Handle network events
          */
         $rootScope.$on('network.status.update', function(event, uuid, params) {
-            console.log('==> status:' + params.status + ' network:' + params.network + ' ip:' + params.ipadress);
             cleepService.reloadModuleConfig('network')
         });
 
