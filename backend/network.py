@@ -1010,6 +1010,7 @@ class Network(CleepModule):
                 'validator': lambda val: val in self.wifi_interfaces
             },
         ])
+
         # reconfigure interface
         return self.wpacli.reconfigure_interface(interface_name)
 

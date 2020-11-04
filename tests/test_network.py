@@ -14,6 +14,7 @@ mock_wpasupplicantconf = Mock()
 mock_dhcpcdconf = Mock()
 mock_etcnetworkinterfaces = Mock()
 mock_iw = Mock()
+mock_ip = Mock()
 mock_iwlist = Mock()
 mock_iwconfig = Mock()
 mock_wpacli = Mock()
@@ -22,11 +23,13 @@ mock_task = Mock()
 mock_ifconfig = Mock()
 mock_netifaces = Mock()
 mock_ifupdown = Mock()
+mock_time = Mock()
 
 @patch('backend.network.WpaSupplicantConf', mock_wpasupplicantconf)
 @patch('backend.network.DhcpcdConf', mock_dhcpcdconf)
 @patch('backend.network.EtcNetworkInterfaces', mock_etcnetworkinterfaces)
 @patch('backend.network.Iw', mock_iw)
+@patch('backend.network.Ip', mock_ip)
 @patch('backend.network.Iwlist', mock_iwlist)
 @patch('backend.network.Iwconfig', mock_iwconfig)
 @patch('backend.network.Wpacli', mock_wpacli)
@@ -35,6 +38,7 @@ mock_ifupdown = Mock()
 @patch('backend.network.Ifconfig', mock_ifconfig)
 @patch('backend.network.netifaces', mock_netifaces)
 @patch('backend.network.Ifupdown', mock_ifupdown)
+@patch('backend.network.time', mock_time)
 class TestNetwork(unittest.TestCase):
 
     WIFI_NETWORKS = {
@@ -103,8 +107,9 @@ class TestNetwork(unittest.TestCase):
 
     def setUp(self):
         self.session = session.TestSession(self)
-        logging.basicConfig(level=logging.DEBUG, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
+        logging.basicConfig(level=logging.FATAL, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
 
+        mock_time.time.return_value = 123
         mock_iw.return_value.get_adapters.return_value = { 'adapter1': { 'interface': 'interface1', 'network': None } }
         mock_iwconfig.return_value.get_interfaces.return_value = {
             'interface1':self.IWCONFIG_INTERFACE1,
@@ -150,6 +155,7 @@ class TestNetwork(unittest.TestCase):
         mock_task.reset_mock()
         mock_wpasupplicantconf.reset_mock()
         mock_iw.reset_mock()
+        mock_ip.reset_mock()
         mock_iwconfig.reset_mock()
         mock_iwlist.reset_mock()
         mock_dhcpcdconf.reset_mock()
@@ -219,10 +225,13 @@ class TestNetwork(unittest.TestCase):
 
     def test_on_stop(self):
         self.init_session()
+        mock_timer = Mock()
+        self.module._Network__network_scan_duration_timer = mock_timer
 
         self.module._on_stop()
 
         mock_task.return_value.stop.assert_called()
+        mock_timer.cancel.assert_called()
 
     def test_load_cleep_wifi_conf(self):
         self.init_session()
@@ -730,6 +739,39 @@ class TestNetwork(unittest.TestCase):
         
         mock_wpasupplicantconf.return_value.set_country.assert_called_with('FR')
 
+    @patch('backend.network.Timer')
+    def test_enable_active_network_scan(self, mock_timer):
+        self.init_session()
+
+        self.module.enable_active_network_scan()
+
+        mock_timer.assert_called_with(self.module.ACTIVE_SCAN_TIMEOUT, self.module.disable_active_network_scan)
+        mock_timer.return_value.start.assert_called()
+        self.assertEqual(self.module._Network__network_scan_duration, 1)
+
+    @patch('backend.network.Timer')
+    def test_enable_active_network_scan_restart_timer(self, mock_timer):
+        self.init_session()
+        mock_old_timer = Mock()
+        self.module._Network__network_scan_duration_timer = mock_old_timer
+
+        self.module.enable_active_network_scan()
+
+        mock_timer.assert_called_with(self.module.ACTIVE_SCAN_TIMEOUT, self.module.disable_active_network_scan)
+        mock_timer.return_value.start.assert_called()
+        self.assertEqual(self.module._Network__network_scan_duration, 1)
+        mock_old_timer.cancel.assert_called()
+
+    def test_disable_active_network_scan(self):
+        self.init_session()
+        mock_old_timer = Mock()
+        self.module._Network__network_scan_duration_timer = mock_old_timer
+
+        self.module.disable_active_network_scan()
+        
+        mock_old_timer.cancel.assert_called()
+        self.assertEqual(self.module._Network__network_scan_duration, self.module.NETWORK_SCAN_DURATION)
+
     def test_check_network_connection_connected_to_wifi(self):
         self.init_session()
         mock_iwconfig.return_value.get_interfaces.return_value = { 'interface1': { 'network': 'network1' } }
@@ -746,7 +788,7 @@ class TestNetwork(unittest.TestCase):
 
         self.module._check_network_connection()
 
-        self.module._check_wifi_interface_status.assert_called_with('interface1', ifaddresses)
+        self.module._check_wifi_interface_status.assert_called_with('interface1')
         self.assertFalse(self.module._check_wired_interface_status.called)
         self.session.assert_event_called('network.status.up')
         self.assertFalse(self.session.event_called('network.status.down'))
@@ -773,7 +815,7 @@ class TestNetwork(unittest.TestCase):
         self.module._check_network_connection()
 
         self.assertFalse(self.module._check_wifi_interface_status.called)
-        self.module._check_wired_interface_status.assert_called_with('interface1')
+        self.module._check_wired_interface_status.assert_called_with('interface1', ifaddresses)
         self.session.assert_event_called('network.status.up')
         self.assertFalse(self.session.event_called('network.status.down'))
 
@@ -795,9 +837,38 @@ class TestNetwork(unittest.TestCase):
         self.module._check_network_connection()
 
         self.assertFalse(self.module._check_wifi_interface_status.called)
-        self.module._check_wired_interface_status.assert_called_with('interface1')
+        self.module._check_wired_interface_status.assert_called_with('interface1', ifaddresses)
         self.session.assert_event_called('network.status.down')
         self.assertFalse(self.session.event_called('network.status.up'))
+
+        mock_iwconfig.return_value.get_interfaces.return_value = {
+            'interface1':self.IWCONFIG_INTERFACE1,
+        }
+        mock_netifaces.interfaces = Mock()
+
+    def test_check_network_connection_optimized(self):
+        self.init_session()
+        mock_iwconfig.return_value.get_interfaces.return_value = { 'interface1': { 'network': 'network1' } }
+        mock_netifaces.interfaces = Mock(return_value=['interface1', 'lo'])
+        ifaddresses = {
+            'AF_INET': [
+                { 'addr': '127.0.0.1' }
+            ],
+        }
+        mock_netifaces.ifaddresses = Mock(return_value=ifaddresses)
+        self.module._check_wifi_interface_status = Mock()
+        self.module._check_wired_interface_status = Mock()
+        self.module._Network__network_is_down = True
+        self.module.network_status = {
+            'interface1': {}
+        }
+
+        self.module._check_network_connection()
+
+        self.assertFalse(self.module._check_wifi_interface_status.called)
+        self.assertFalse(self.module._check_wired_interface_status.called)
+        self.assertFalse(self.session.event_called('network.status.up'))
+        self.assertFalse(self.session.event_called('network.status.down'))
 
         mock_iwconfig.return_value.get_interfaces.return_value = {
             'interface1':self.IWCONFIG_INTERFACE1,
@@ -893,11 +964,22 @@ class TestNetwork(unittest.TestCase):
 
         self.assertFalse(self.session.event_called('network.status.update'))
 
-    def test_reconfigure_wired_interface(self):
+    def test_reconfigure_wired_interface_with_dhcpcd(self):
         self.init_session()
+        mock_dhcpcdconf.return_value.is_installed.return_value = True
 
         self.module.reconfigure_wired_interface('interface1')
 
+        mock_ip.return_value.restart_interface.assert_called_with('interface1')
+        self.assertFalse(mock_ifupdown.return_value.restart_interface.called)
+
+    def test_reconfigure_wired_interface_with_network_interfaces(self):
+        self.init_session()
+        mock_dhcpcdconf.return_value.is_installed.return_value = False
+
+        self.module.reconfigure_wired_interface('interface1')
+
+        self.assertFalse(mock_ip.return_value.restart_interface.called)
         mock_ifupdown.return_value.restart_interface.assert_called_with('interface1')
 
     def test_reconfigure_wired_interface_exception(self):
@@ -1314,6 +1396,67 @@ class TestNetwork(unittest.TestCase):
 
         mock_wpacli.return_value.get_status.return_value = Mock()
 
+    def test_check_wifi_interface_status_still_connecting(self):
+        self.init_session()
+        mock_wpacli.return_value.get_status.return_value = {
+            'network': None,
+            'state': mock_wpacli.STATE_COMPLETED,
+            'ipaddress': None,
+        }
+        self.module.network_status = {
+            'interface1': {
+                'network': None,
+                'status': self.module.STATUS_DISCONNECTED,
+                'ipaddress': None,
+            }
+        }
+
+        self.module._check_wifi_interface_status('interface1')
+
+        self.assertDictEqual(self.module.network_status, {
+            'interface1': {
+                'network': None,
+                'status': self.module.STATUS_CONNECTING,
+                'ipaddress': None,
+            }
+        })
+        self.session.assert_event_called_with('network.status.update', {
+            'network': None,
+            'status': self.module.STATUS_CONNECTING,
+            'ipaddress': None,
+            'interface': 'interface1',
+            'type': self.module.TYPE_WIFI,
+        })
+
+        mock_wpacli.return_value.get_status.return_value = Mock()
+
+    def test_check_wifi_interface_status_still_keep_invalid_password_status(self):
+        self.init_session()
+        mock_wpacli.return_value.get_status.return_value = {
+            'network': None,
+            'state': mock_wpacli.STATE_AUTHENTICATING,
+            'ipaddress': None,
+        }
+        self.module.network_status = {
+            'interface1': {
+                'network': None,
+                'status': self.module.STATUS_WIFI_INVALID_PASSWORD,
+                'ipaddress': None,
+            }
+        }
+
+        self.module._check_wifi_interface_status('interface1')
+
+        self.assertDictEqual(self.module.network_status, {
+            'interface1': {
+                'network': None,
+                'status': self.module.STATUS_WIFI_INVALID_PASSWORD,
+                'ipaddress': None,
+            }
+        })
+
+        mock_wpacli.return_value.get_status.return_value = Mock()
+
     def test_scan_wifi_networks(self):
         self.init_session()
         mock_wpasupplicantconf.return_value.get_configurations.return_value = { 
@@ -1607,25 +1750,19 @@ class TestNetwork(unittest.TestCase):
 
         self.assertTrue(self.module.reconfigure_wifi_interface('interface1'))
 
-        mock_ifupdown.return_value.restart_interface.assert_called_with('interface1')
         mock_wpacli.return_value.reconfigure_interface.assert_called_with('interface1')
-
+        
     def test_reconfigure_wifi_interface_failed(self):
         self.init_session()
+        mock_wpacli.return_value.reconfigure_interface.return_value = False
         self.module.wifi_interfaces = {
             'interface1': {
                 'network': 'network1',
             }
         }
 
-        mock_ifupdown.return_value.restart_interface.return_value = False
         self.assertFalse(self.module.reconfigure_wifi_interface('interface1'))
-        self.assertFalse(mock_wpacli.return_value.reconfigure_interface.called)
-        mock_ifupdown.return_value.restart_interface = Mock()
-
-        mock_wpacli.return_value.reconfigure_interface.return_value = False
-        self.assertFalse(self.module.reconfigure_wifi_interface('interface1'))
-        mock_ifupdown.return_value.restart_interface.assert_called_with('interface1')
+        self.assertTrue(mock_wpacli.return_value.reconfigure_interface.called)
 
     def test_reconfigure_wifi_interface_exception(self):
         self.init_session()
