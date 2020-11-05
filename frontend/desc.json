@@ -5,6 +5,6 @@
     },
     "config": {
         "js": ["network.config.js"],
-        "html": ["network.config.html", "addHiddenWifiDialog.html", "networkInfosDialog.html", "wifiConnectionDialog.html", "wifiEditDialog.html", "wiredEditDialog.html"]
+        "html": ["network.config.html", "add-hidden-wifi.dialog.html", "network-infos.dialog.html", "wifi-connection.dialog.html", "wifi-edit.dialog.html", "wired-edit.dialog.html"]
     }
 }
