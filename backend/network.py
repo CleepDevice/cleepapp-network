@@ -127,7 +127,7 @@ class Network(CleepModule):
 
         # handle startup config if cleep wifi conf exists
         if self.cleepwifi.exists():
-            self.logger.debug('Cleepwifi config file exists. Load wifi config')
+            self.logger.info('Cleepwifi.conf file found. Load wifi config')
             try:
                 self._load_cleep_wifi_conf()
             except Exception:
@@ -160,7 +160,7 @@ class Network(CleepModule):
         cleep_conf = self.cleepwifi.get_configuration()
         self.logger.debug('cleep_conf: %s' % cleep_conf)
         if not cleep_conf:
-            self.logger.warning('cleepwifi.conf file content is empty')
+            self.logger.warning('Cleepwifi file content is empty or invalid')
             return
 
         # search for network in interface
