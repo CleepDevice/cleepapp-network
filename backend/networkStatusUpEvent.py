@@ -9,7 +9,7 @@ class NetworkStatusUpEvent(Event):
     """
 
     EVENT_NAME = 'network.status.up'
-    EVENT_SYSTEM = True
+    EVENT_PROPAGATE = False
     EVENT_PARAMS = []
 
     def __init__(self, bus, formatters_broker):

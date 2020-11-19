@@ -11,7 +11,8 @@ class NetworkStatusUpdateEvent(Event):
     """
 
     EVENT_NAME = 'network.status.update'
-    EVENT_SYSTEM = True
+    EVENT_PROPAGATE = False
+    EVENT_PARAMS = ['type', 'interface', 'network', 'ipaddress', 'status']
 
     def __init__(self, bus, formatters_broker):
         """ 
@@ -22,23 +23,4 @@ class NetworkStatusUpdateEvent(Event):
             formatters_broker (FormattersBroker): formatters broker instance
         """
         Event.__init__(self, bus, formatters_broker)
-
-    def _check_params(self, params):
-        """
-        Check event parameters
-
-        Args:
-            params (dict): event parameters
-
-        Return:
-            bool: True if params are valid, False otherwise
-        """
-        keys = [
-            'type',
-            'interface',
-            'network',
-            'ipaddress',
-            'status'
-        ]   
-        return all(key in keys for key in params.keys())
 
