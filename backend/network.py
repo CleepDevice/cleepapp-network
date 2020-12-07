@@ -67,16 +67,16 @@ class Network(CleepModule):
     NETWORK_SCAN_DURATION = 60
     ACTIVE_SCAN_TIMEOUT = 10 * 60
 
-    def __init__(self, bus, debug_enabled):
+    def __init__(self, bootstrap, debug_enabled):
         """
         Constructor
 
         Args:
-            bus (MessageBus): bus instance
+            bootstrap (dict): bootstrap object
             debug_enabled (bool): debug status
         """
         # init
-        CleepModule.__init__(self, bus, debug_enabled)
+        CleepModule.__init__(self, bootstrap, debug_enabled)
 
         # tools
         self.etcnetworkinterfaces = EtcNetworkInterfaces(self.cleep_filesystem)

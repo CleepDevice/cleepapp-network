@@ -14,13 +14,12 @@ class NetworkStatusUpdateEvent(Event):
     EVENT_PROPAGATE = False
     EVENT_PARAMS = ['type', 'interface', 'network', 'ipaddress', 'status']
 
-    def __init__(self, bus, formatters_broker):
+    def __init__(self, params):
         """ 
         Constructor
 
         Args:
-            bus (MessageBus): message bus instance
-            formatters_broker (FormattersBroker): formatters broker instance
+            params (dict): event parameters
         """
-        Event.__init__(self, bus, formatters_broker)
+        Event.__init__(self, params)
 
