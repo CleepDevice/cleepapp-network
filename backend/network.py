@@ -409,7 +409,7 @@ class Network(CleepModule):
 
         return configured_interfaces
 
-    def event_received(self, event):
+    def on_event(self, event):
         """
         Event received on bus
 

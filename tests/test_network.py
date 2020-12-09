@@ -719,20 +719,20 @@ class TestNetwork(unittest.TestCase):
 
         mock_etcnetworkinterfaces.return_value.get_configurations.return_value = Mock()
 
-    def test_event_received(self):
+    def test_on_event(self):
         self.init_session()
 
-        self.module.event_received({
+        self.module.on_event({
             'event': 'parameters.time.now',
             'params': {}
         })
         
         self.assertFalse(mock_wpasupplicantconf.return_value.set_country.called)
 
-    def test_event_received_update_wpasupplicant_country(self):
+    def test_on_event_update_wpasupplicant_country(self):
         self.init_session()
 
-        self.module.event_received({
+        self.module.on_event({
             'event': 'system.country.update',
             'params': {'country': 'FR'}
         })
