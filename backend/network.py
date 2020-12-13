@@ -42,7 +42,7 @@ class Network(CleepModule):
 
     """
     MODULE_AUTHOR = 'Cleep'
-    MODULE_VERSION = '1.1.0'
+    MODULE_VERSION = '2.0.0'
     MODULE_CATEGORY = 'APPLICATION'
     MODULE_PRICE = 0
     MODULE_DEPS = []
