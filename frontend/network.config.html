@@ -20,6 +20,10 @@
             <span>Wifi connections</span>
             <span ng-if="networkCtl.config.wifiinterfaces.length>1">on wifi adapter #{{$index}} ({{interface}})</span>
         </md-subheader>
+        <md-list-item ng-if="networkCtl.config.wifiinterfaces.length===0">
+            <md-icon md-svg-icon="wifi"></md-icon>
+            <p>No wireless adapter</p>
+        </md-list-item>
         <md-list-item ng-click="networkCtl.showConfig(network, 'wifi', $event)" ng-repeat="network in networkCtl.config.networks | filter: {wifi:true, interface:interface}">
             <md-icon md-svg-icon="wifi"></md-icon>
             <p ng-if="networkCtl.config.networkstatus[network.interface].status===3 && networkCtl.config.networkstatus[network.interface].network===network.network">
