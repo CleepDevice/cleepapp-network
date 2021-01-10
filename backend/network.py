@@ -13,6 +13,7 @@ from cleep.libs.commands.ip import Ip
 from cleep.libs.commands.iwlist import Iwlist
 from cleep.libs.commands.iwconfig import Iwconfig
 from cleep.libs.commands.ifupdown import Ifupdown
+from cleep.libs.commands.rfkill import Rfkill
 from cleep.libs.commands.wpacli import Wpacli
 from cleep.libs.configs.cleepwificonf import CleepWifiConf
 from cleep.libs.internals.task import Task
@@ -81,7 +82,7 @@ class Network(CleepModule):
         # tools
         self.etcnetworkinterfaces = EtcNetworkInterfaces(self.cleep_filesystem)
         self.dhcpcd = DhcpcdConf(self.cleep_filesystem)
-        self.wpasupplicant = WpaSupplicantConf(self.cleep_filesystem)
+        self.wpasupplicantconf = WpaSupplicantConf(self.cleep_filesystem)
         self.iw = Iw()
         self.iwlist = Iwlist()
         self.ifconfig = Ifconfig()
@@ -89,6 +90,7 @@ class Network(CleepModule):
         self.ifupdown = Ifupdown()
         self.ip = Ip()
         self.wpacli = Wpacli()
+        self.rfkill = Rfkill()
         self.cleepwifi = CleepWifiConf()
 
         # members
@@ -112,7 +114,9 @@ class Network(CleepModule):
         """
         Module start
         """
-        pass
+        # create default wpa_supplicant.conf file if it does not exist
+        if not self.wpasupplicantconf.has_config():
+            self.wpasupplicantconf.save_default_config()
 
     def _on_start(self):
         """
@@ -125,7 +129,26 @@ class Network(CleepModule):
             self.logger.exception('Exception occured when refreshing wifi networks:')
             self.crash_report.report_exception()
 
-        # handle startup config if cleep wifi conf exists
+        # create default wpa_supplicant conf for all interfaces
+        add_country_for_interfaces = []
+        for interface_name in self.wifi_interfaces:
+            if not self.wpasupplicantconf.has_config(interface=interface_name):
+                self.wpasupplicantconf.save_default_config(interface=interface_name)
+
+            if not self.wpasupplicantconf.has_country(interface=interface_name):
+                add_country_for_interfaces.append(interface_name)
+
+        # set wpasupplicant country code
+        if add_country_for_interfaces:
+            resp = self.send_command('get_country', 'parameters')
+            if not resp.error:
+                self.logger.info('Set country "%s" to wpasupplicant files' % resp.data['alpha2'])
+                self.wpasupplicantconf.set_country_alpha2(resp.data['alpha2'])
+
+            for interface_name in add_country_for_interfaces:
+                self.wpacli.reconfigure_interface(interface_name)
+
+        # handle startup config if cleepwifi.conf exists
         if self.cleepwifi.exists():
             self.logger.info('Cleepwifi.conf file found. Load wifi config')
             try:
@@ -135,6 +158,9 @@ class Network(CleepModule):
                 self.crash_report.report_exception()
             finally:
                 self.cleepwifi.delete(self.cleep_filesystem)
+
+        # enable wifi with rfkill
+        self.rfkill.is_installed() and self.rfkill.unblock_device(None)
 
         # launch network watchdog
         self.__network_watchdog_task = Task(1.0, self._check_network_connection, self.logger)
@@ -179,7 +205,7 @@ class Network(CleepModule):
 
         # add config if not already exists
         if found_interface or cleep_conf['hidden']:
-            if not self.wpasupplicant.add_network(
+            if not self.wpasupplicantconf.add_network(
                     cleep_conf['network'],
                     found_encryption,
                     cleep_conf['password'],
@@ -416,10 +442,10 @@ class Network(CleepModule):
         Args:
             event (dist): event data
         """
-        if event['event'] == 'system.country.update':
+        if event['event'] == 'parameters.country.update':
             # update wpa_supplicant country code
             self.logger.debug('Received country update event: %s' % event)
-            self.wpasupplicant.set_country(event['params']['country'])
+            self.wpasupplicantconf.set_country_alpha2(event['params']['alpha2'])
 
     def enable_active_network_scan(self):
         """
@@ -764,7 +790,7 @@ class Network(CleepModule):
 
         """
         # get wireless configuration
-        wifi_configs = self.wpasupplicant.get_configurations()
+        wifi_configs = self.wpasupplicantconf.get_configurations()
         wifi_config = wifi_configs[interface_name] if interface_name in wifi_configs else {}
         self.logger.debug('Wifi config for interface "%s": %s' % (interface_name, wifi_config))
 
@@ -879,7 +905,7 @@ class Network(CleepModule):
         ])
 
         # save config in wpa_supplicant.conf file
-        if not self.wpasupplicant.add_network(network_name, encryption, password, hidden, interface=interface_name):
+        if not self.wpasupplicantconf.add_network(network_name, encryption, password, hidden, interface=interface_name):
             raise CommandError('Unable to save network configuration')
 
         # reconfigure interface
@@ -905,7 +931,7 @@ class Network(CleepModule):
             {'name': 'network_name', 'value': network_name, 'type': str},
         ])
 
-        if not self.wpasupplicant.delete_network(network_name, interface=interface_name):
+        if not self.wpasupplicantconf.delete_network(network_name, interface=interface_name):
             raise CommandError('Unable to delete network configuration')
 
         # reconfigure interface
@@ -933,7 +959,7 @@ class Network(CleepModule):
             {'name': 'password', 'value': password, 'type': str},
         ])
 
-        if not self.wpasupplicant.update_network_password(network_name, password, interface=interface_name):
+        if not self.wpasupplicantconf.update_network_password(network_name, password, interface=interface_name):
             raise CommandError('Unable to update network password')
 
         # reconfigure interface
@@ -959,7 +985,7 @@ class Network(CleepModule):
             {'name': 'network_name', 'value': network_name, 'type': str},
         ])
 
-        if not self.wpasupplicant.enable_network(network_name, interface=interface_name):
+        if not self.wpasupplicantconf.enable_network(network_name, interface=interface_name):
             raise CommandError('Unable to enable network')
 
         # reconfigure interface
@@ -985,7 +1011,7 @@ class Network(CleepModule):
             {'name': 'network_name', 'value': network_name, 'type': str},
         ])
 
-        if not self.wpasupplicant.disable_network(network_name, interface=interface_name):
+        if not self.wpasupplicantconf.disable_network(network_name, interface=interface_name):
             raise CommandError('Unable to disable network')
 
         # reconfigure interface
