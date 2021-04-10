@@ -3,6 +3,8 @@
 
 import time
 import copy
+from threading import Timer
+import netifaces
 from cleep.exception import CommandError
 from cleep.core import CleepModule
 from cleep.libs.configs.wpasupplicantconf import WpaSupplicantConf
@@ -18,8 +20,6 @@ from cleep.libs.commands.rfkill import Rfkill
 from cleep.libs.commands.wpacli import Wpacli
 from cleep.libs.configs.cleepwificonf import CleepWifiConf
 from cleep.libs.internals.task import Task
-import netifaces
-from threading import Timer
 
 __all__ = ['Network']
 
@@ -44,7 +44,7 @@ class Network(CleepModule):
 
     """
     MODULE_AUTHOR = 'Cleep'
-    MODULE_VERSION = '2.0.0'
+    MODULE_VERSION = '2.0.1'
     MODULE_CATEGORY = 'APPLICATION'
     MODULE_PRICE = 0
     MODULE_DEPS = []
@@ -452,7 +452,7 @@ class Network(CleepModule):
         """
         Enable active network scan. It means application will scan every seconds network
         connectivity.
-        
+
         As it consumes device ressources, this feature will be automatically
         disabled after configured amount of time. It can be disabled manually calling
         disable_active_network_scan.
@@ -487,7 +487,7 @@ class Network(CleepModule):
         """
         # Performance optimization: do not check network connection each seconds all the time.
         # To reduce scan frequency frontend enables active scan (each seconds) when user loads network
-        # config page and this for a configured duration. After this time, scan duration is set to 
+        # config page and this for a configured duration. After this time, scan duration is set to
         # its optimized value NETWORK_SCAN_DURATION
         if self.network_status and int(time.time()) % self.__network_scan_duration != 0:
             return
