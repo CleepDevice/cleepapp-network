@@ -2,6 +2,7 @@
 #  -*- coding: utf-8 -*-
 
 import time
+import copy
 from cleep.exception import CommandError
 from cleep.core import CleepModule
 from cleep.libs.configs.wpasupplicantconf import WpaSupplicantConf
@@ -486,8 +487,8 @@ class Network(CleepModule):
         """
         # Performance optimization: do not check network connection each seconds all the time.
         # To reduce scan frequency frontend enables active scan (each seconds) when user loads network
-        # config page and this for a configured duration. After this time, scan durations returns
-        # to its optimized value NETWORK_SCAN_DURATION
+        # config page and this for a configured duration. After this time, scan duration is set to 
+        # its optimized value NETWORK_SCAN_DURATION
         if self.network_status and int(time.time()) % self.__network_scan_duration != 0:
             return
 
@@ -511,10 +512,10 @@ class Network(CleepModule):
             # update interface status
             if interface_name in wifi_interfaces:
                 # wireless interface
-                self._check_wifi_interface_status(interface_name)
+                self._check_wifi_interface_status(copy.copy(interface_name))
             else:
                 # ethernet interface
-                self._check_wired_interface_status(interface_name, addresses)
+                self._check_wired_interface_status(copy.copy(interface_name))
 
         # handle network connection status
         if connected and self.__network_is_down:
@@ -528,13 +529,12 @@ class Network(CleepModule):
     # WIRED AREA
     # ----------
 
-    def _check_wired_interface_status(self, interface_name, netifaces_infos):
+    def _check_wired_interface_status(self, interface_name):
         """
         Check wired interface status
 
         Args:
             interface_name (string): name of wired interface
-            netifaces_infos (dict): infos from netifaces request
         """
         if interface_name not in self.network_status:
             self.network_status[interface_name] = {
@@ -547,17 +547,18 @@ class Network(CleepModule):
         previous_status = self.network_status[interface_name]['status']
 
         # update status
-        if netifaces.AF_INET in netifaces_infos:
+        addresses = netifaces.ifaddresses(interface_name)
+        if netifaces.AF_INET in addresses:
             self.network_status[interface_name].update({
                 'status': self.STATUS_CONNECTED,
-                'ipaddress': netifaces_infos[netifaces.AF_INET][0]['addr'],
+                'ipaddress': copy.copy(addresses[netifaces.AF_INET][0]['addr']),
             })
         # TODO ipv6 appears more quickly than ipv4 so event sends status with ipv6.
         # We need to find a way to handle both ipv4 and ipv6
         # elif netifaces.AF_INET6 in netifaces_infos:
         #     self.network_status[interface].update({
         #        'status': self.STATUS_CONNECTED,
-        #        'ipaddress': netifaces_infos[netifaces.AF_INET6][0]['addr'],
+        #        'ipaddress': copy.copy(netifaces_infos[netifaces.AF_INET6][0]['addr'],
         #     })
         else:
             self.network_status[interface_name].update({
@@ -566,6 +567,7 @@ class Network(CleepModule):
             })
 
         # send event
+        self.logger.debug('======> %s %s' % (previous_status, self.network_status))
         if previous_status is not None and previous_status != self.network_status[interface_name]['status']:
             self.logger.debug('Wired interface "%s" status %s with ip "%s"' % (
                 interface_name,
@@ -744,9 +746,9 @@ class Network(CleepModule):
 
         # update current network status
         self.network_status[interface_name].update({
-            'network': current_status['network'],
+            'network': copy.copy(current_status['network']),
             'status': wifi_status,
-            'ipaddress': current_status['ipaddress'],
+            'ipaddress': copy.copy(current_status['ipaddress']),
         })
 
         # send event if necessary

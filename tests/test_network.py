@@ -133,7 +133,12 @@ class TestNetwork(unittest.TestCase):
             'interface1': self.DHCPCD_INTERFACE1,
             'interface2': self.DHCPCD_INTERFACE2,
         }
-        mock_netifaces.AF_INET = 'AF_INET'
+        mock_netifaces.AF_INET = 2
+        mock_netifaces.ifaddresses = Mock(return_value={
+            17: [{'addr': 'b8:27:eb:62:24:18', 'broadcast': 'ff:ff:ff:ff:ff:ff'}],
+            2: [{'addr': '192.168.1.228', 'netmask': '255.255.255.0', 'broadcast': '192.168.1.255'}],
+            10: [{'addr': 'fe80::dec4:b0ff:5a7e:804%eth0', 'netmask': 'ffff:ffff:ffff:ffff::/64'}]
+        })
         mock_etcnetworkinterfaces.OPTION_AUTO = 1
         mock_etcnetworkinterfaces.OPTION_HOTPLUG = 2
         mock_etcnetworkinterfaces.OPTION_NONE = 3
@@ -733,11 +738,11 @@ class TestNetwork(unittest.TestCase):
         self.init_session()
 
         self.module.on_event({
-            'event': 'system.country.update',
-            'params': {'country': 'FR'}
+            'event': 'parameters.country.update',
+            'params': {'country': 'france', 'alpha2': 'FR'}
         })
         
-        mock_wpasupplicantconf.return_value.set_country.assert_called_with('FR')
+        mock_wpasupplicantconf.return_value.set_country_alpha2.assert_called_with('FR')
 
     @patch('backend.network.Timer')
     def test_enable_active_network_scan(self, mock_timer):
@@ -777,7 +782,7 @@ class TestNetwork(unittest.TestCase):
         mock_iwconfig.return_value.get_interfaces.return_value = { 'interface1': { 'network': 'network1' } }
         mock_netifaces.interfaces = Mock(return_value=['interface1', 'lo'])
         ifaddresses = {
-            'AF_INET': [
+            2: [
                 { 'addr': '127.0.0.1' }
             ],
         }
@@ -803,7 +808,7 @@ class TestNetwork(unittest.TestCase):
         mock_iwconfig.return_value.get_interfaces.return_value = {}
         mock_netifaces.interfaces = Mock(return_value=['interface1'])
         ifaddresses = {
-            'AF_INET': [
+            2: [
                 { 'addr': '127.0.0.1' }
             ],
         }
@@ -815,14 +820,14 @@ class TestNetwork(unittest.TestCase):
         self.module._check_network_connection()
 
         self.assertFalse(self.module._check_wifi_interface_status.called)
-        self.module._check_wired_interface_status.assert_called_with('interface1', ifaddresses)
+        self.module._check_wired_interface_status.assert_called_with('interface1')
         self.session.assert_event_called('network.status.up')
         self.assertFalse(self.session.event_called('network.status.down'))
 
         mock_iwconfig.return_value.get_interfaces.return_value = {
             'interface1':self.IWCONFIG_INTERFACE1,
         }
-        mock_netifaces.interfaces = Mock()
+        #mock_netifaces.interfaces = Mock()
 
     def test_check_network_connection_disconnected(self):
         self.init_session()
@@ -837,7 +842,7 @@ class TestNetwork(unittest.TestCase):
         self.module._check_network_connection()
 
         self.assertFalse(self.module._check_wifi_interface_status.called)
-        self.module._check_wired_interface_status.assert_called_with('interface1', ifaddresses)
+        self.module._check_wired_interface_status.assert_called_with('interface1')
         self.session.assert_event_called('network.status.down')
         self.assertFalse(self.session.event_called('network.status.up'))
 
@@ -851,7 +856,7 @@ class TestNetwork(unittest.TestCase):
         mock_iwconfig.return_value.get_interfaces.return_value = { 'interface1': { 'network': 'network1' } }
         mock_netifaces.interfaces = Mock(return_value=['interface1', 'lo'])
         ifaddresses = {
-            'AF_INET': [
+            2: [
                 { 'addr': '127.0.0.1' }
             ],
         }
@@ -877,11 +882,11 @@ class TestNetwork(unittest.TestCase):
 
     def test_check_wired_interface_status_connected(self):
         self.init_session()
-        netifaces_infos = {
-            'AF_INET': [
+        mock_netifaces.ifaddresses = Mock(return_value={
+            2: [
                 { 'addr': '192.168.1.1' }
             ],
-        }
+        })
         self.module.network_status = {
             'interface1': {
                 'network': self.module.TYPE_WIRED,
@@ -890,7 +895,7 @@ class TestNetwork(unittest.TestCase):
             },
         }
 
-        self.module._check_wired_interface_status('interface1', netifaces_infos)
+        self.module._check_wired_interface_status('interface1')
 
         self.session.assert_event_called_with('network.status.update', {
             'type': self.module.TYPE_WIRED,
@@ -903,7 +908,7 @@ class TestNetwork(unittest.TestCase):
     def test_check_wired_interface_status_no_update_if_already_connected(self):
         self.init_session()
         netifaces_infos = {
-            'AF_INET': [
+            2: [
                 { 'addr': '192.168.1.1' }
             ],
         }
@@ -915,13 +920,13 @@ class TestNetwork(unittest.TestCase):
             },
         }
 
-        self.module._check_wired_interface_status('interface1', netifaces_infos)
+        self.module._check_wired_interface_status('interface1')
 
         self.assertFalse(self.session.event_called('network.status.update'))
 
     def test_check_wired_interface_status_disconnected(self):
         self.init_session()
-        netifaces_infos = { }
+        mock_netifaces.ifaddresses = Mock(return_value={})
         self.module.network_status = {
             'interface1': {
                 'network': self.module.TYPE_WIRED,
@@ -930,7 +935,7 @@ class TestNetwork(unittest.TestCase):
             },
         }
 
-        self.module._check_wired_interface_status('interface1', netifaces_infos)
+        self.module._check_wired_interface_status('interface1')
 
         self.session.assert_event_called_with('network.status.update', {
             'type': self.module.TYPE_WIRED,
@@ -942,7 +947,7 @@ class TestNetwork(unittest.TestCase):
 
     def test_check_wired_interface_status_no_update_if_already_disconnected(self):
         self.init_session()
-        netifaces_infos = {}
+        mock_netifaces.ifaddresses = Mock(return_value={})
         self.module.network_status = {
             'interface1': {
                 'network': self.module.TYPE_WIRED,
@@ -951,7 +956,7 @@ class TestNetwork(unittest.TestCase):
             },
         }
 
-        self.module._check_wired_interface_status('interface1', netifaces_infos)
+        self.module._check_wired_interface_status('interface1')
 
         self.assertFalse(self.session.event_called('network.status.update'))
 
@@ -960,7 +965,7 @@ class TestNetwork(unittest.TestCase):
         netifaces_infos = {}
         self.module.network_status = {}
 
-        self.module._check_wired_interface_status('interface1', netifaces_infos)
+        self.module._check_wired_interface_status('interface1')
 
         self.assertFalse(self.session.event_called('network.status.update'))
 
