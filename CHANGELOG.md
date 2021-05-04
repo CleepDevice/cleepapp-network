@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.0.2 - 2021-05-04
+
+* Frontend: fix layout
+
 ## v2.0.1 - 2021-04-10
 
 * Improve memory usage in network scan
