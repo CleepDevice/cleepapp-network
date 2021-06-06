@@ -46,7 +46,6 @@ class Network(CleepModule):
     MODULE_AUTHOR = 'Cleep'
     MODULE_VERSION = '2.0.3'
     MODULE_CATEGORY = 'APPLICATION'
-    MODULE_PRICE = 0
     MODULE_DEPS = []
     MODULE_DESCRIPTION = 'Configure how your device connect to your network'
     MODULE_LONGDESCRIPTION = 'Application that helps you to configure device network connection'
