@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.0.3 - 2021-06-06
+
+* Fix tests after core changes
+
 ## v2.0.2 - 2021-05-04
 
 * Frontend: fix layout

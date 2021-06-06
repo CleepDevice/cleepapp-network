@@ -1000,7 +1000,7 @@ class TestNetwork(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.reconfigure_wired_interface(123)
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
 
     def test_save_wired_static_interface_static_with_dhcpcd(self):
         self.init_session()
@@ -1130,28 +1130,28 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration(123, '1.1.1.1', '2.2.2.2', '3.3.3.3', False)
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0', '', '2.2.2.2', '3.3.3.3', False)
         self.assertEqual(str(cm.exception), 'Parameter "ip_address" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0', 123, '2.2.2.2', '3.3.3.3', False)
-        self.assertEqual(str(cm.exception), 'Parameter "ip_address" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "ip_address" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0', '1.1.1.1', '', '3.3.3.3', False)
         self.assertEqual(str(cm.exception), 'Parameter "gateway" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0', '1.1.1.1', 123, '3.3.3.3', False)
-        self.assertEqual(str(cm.exception), 'Parameter "gateway" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "gateway" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0.', '1.1.1.1', '2.2.2.2', '', False)
         self.assertEqual(str(cm.exception), 'Parameter "netmask" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0.', '1.1.1.1', '2.2.2.2', 123, False)
-        self.assertEqual(str(cm.exception), 'Parameter "netmask" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "netmask" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration('0.0.0.0.', '1.1.1.1', '2.2.2.2', '3.3.3.3', 123)
-        self.assertEqual(str(cm.exception), 'Parameter "fallback" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "fallback" must be of type "bool"')
 
     def test_save_wired_dhcp_configuration_with_dhcpcd(self):
         self.init_session()
@@ -1207,7 +1207,7 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wired_static_configuration(123, '1.1.1.1', '2.2.2.2', '3.3.3.3', False)
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
 
     def test_check_wifi_interface_status_connected(self):
         self.init_session()
@@ -1558,19 +1558,19 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wifi_network_configuration(123, 'network1', mock_wpasupplicantconf.ENCRYPTION_TYPE_WPA2, 'password', False)
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wifi_network_configuration('interface1', '', mock_wpasupplicantconf.ENCRYPTION_TYPE_WPA2, 'password', False)
         self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wifi_network_configuration('interface1', 123, mock_wpasupplicantconf.ENCRYPTION_TYPE_WPA2, 'password', False)
-        self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "network_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wifi_network_configuration('interface1', 'network1', 'dummy', 'password', False)
         self.assertEqual(str(cm.exception), 'Parameter "encryption" is invalid (specified="dummy")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.save_wifi_network_configuration('interface1', 'network1', 123, 'password', False)
-        self.assertEqual(str(cm.exception), 'Parameter "encryption" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "encryption" must be of type "str"')
 
     def test_delete_wifi_network(self):
         self.init_session()
@@ -1605,13 +1605,13 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.delete_wifi_network_configuration(123, 'network1')
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.delete_wifi_network_configuration('interface1', '')
         self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.delete_wifi_network_configuration('interface1', 123)
-        self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "network_name" must be of type "str"')
 
     def test_update_wifi_network_password(self):
         self.init_session()
@@ -1649,19 +1649,19 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_wifi_network_password(123, 'network1', 'newpassword')
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_wifi_network_password('interface1', '', 'newpassword')
         self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_wifi_network_password('interface1', 123, 'newpassword')
-        self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "network_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_wifi_network_password('interface1', 'network1', '')
         self.assertEqual(str(cm.exception), 'Parameter "password" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_wifi_network_password('interface1', 'network1', 123)
-        self.assertEqual(str(cm.exception), 'Parameter "password" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "password" must be of type "str"')
 
     def test_enable_wifi_network(self):
         self.init_session()
@@ -1696,13 +1696,13 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.enable_wifi_network(123, 'network1')
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.enable_wifi_network('interface1', '')
         self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.enable_wifi_network('interface1', 123)
-        self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "network_name" must be of type "str"')
 
     def test_disable_wifi_network(self):
         self.init_session()
@@ -1737,13 +1737,13 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.disable_wifi_network(123, 'network1')
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.disable_wifi_network('interface1', '')
         self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.disable_wifi_network('interface1', 123)
-        self.assertEqual(str(cm.exception), 'Parameter "network_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "network_name" must be of type "str"')
 
     def test_reconfigure_wifi_interface(self):
         self.init_session()
@@ -1791,7 +1791,7 @@ class TestNetwork(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="")')
         with self.assertRaises(InvalidParameter) as cm:
             self.module.disable_wifi_network(123, 'network1')
-        self.assertEqual(str(cm.exception), 'Parameter "interface_name" is invalid (specified="123")')
+        self.assertEqual(str(cm.exception), 'Parameter "interface_name" must be of type "str"')
 
 
 
