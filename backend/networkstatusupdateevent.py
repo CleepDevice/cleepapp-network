@@ -3,6 +3,7 @@
 
 from cleep.libs.internals.event import Event
 
+
 class NetworkStatusUpdateEvent(Event):
     """
     Network.status.update event.
@@ -10,9 +11,9 @@ class NetworkStatusUpdateEvent(Event):
     Report network interface status
     """
 
-    EVENT_NAME = 'network.status.update'
+    EVENT_NAME = "network.status.update"
     EVENT_PROPAGATE = False
-    EVENT_PARAMS = ['type', 'interface', 'network', 'ipaddress', 'status']
+    EVENT_PARAMS = ["type", "interface", "network", "ipaddress", "status"]
 
     def __init__(self, params):
         """
@@ -22,4 +23,3 @@ class NetworkStatusUpdateEvent(Event):
             params (dict): event parameters
         """
         Event.__init__(self, params)
-

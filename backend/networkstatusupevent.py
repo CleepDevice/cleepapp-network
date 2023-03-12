@@ -3,12 +3,13 @@
 
 from cleep.libs.internals.event import Event
 
+
 class NetworkStatusUpEvent(Event):
     """
     Network.status.up event
     """
 
-    EVENT_NAME = 'network.status.up'
+    EVENT_NAME = "network.status.up"
     EVENT_PROPAGATE = False
     EVENT_PARAMS = []
 
@@ -20,4 +21,3 @@ class NetworkStatusUpEvent(Event):
             params (dict): event parameters
         """
         Event.__init__(self, params)
-
