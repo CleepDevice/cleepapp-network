@@ -1,4 +1,4 @@
-# cleepmod-network [![Coverage Status](https://coveralls.io/repos/github/tangb/cleepmod-network/badge.svg?branch=master)](https://coveralls.io/github/tangb/cleepmod-network?branch=master)
+# cleepmod-network [![Coverage Status](https://coveralls.io/repos/github/tangb/cleepapp-network/badge.svg?branch=master)](https://coveralls.io/github/tangb/cleepapp-network?branch=master)
 
 Network application for Cleep
 
