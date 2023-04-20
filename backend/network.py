@@ -989,9 +989,6 @@ class Network(CleepModule):
 
         Returns:
             bool: True if connection succeed
-
-        Raises:
-            CommandError if network adding failed
         """
         # check params
         self._check_parameters(
@@ -1026,9 +1023,6 @@ class Network(CleepModule):
 
         Returns:
             bool: True if network deleted
-
-        Raises:
-            CommandError if network deletion failed
         """
         # check params
         self._check_parameters(
@@ -1057,9 +1051,6 @@ class Network(CleepModule):
 
         Returns:
             bool: True if update succeed
-
-        Raises:
-            CommandError
         """
         # check params
         self._check_parameters(
@@ -1088,9 +1079,6 @@ class Network(CleepModule):
 
         Returns:
             bool: True if network updated
-
-        Raises:
-            CommandError
         """
         # check params
         self._check_parameters(
@@ -1118,9 +1106,6 @@ class Network(CleepModule):
 
         Returns:
             bool: True if network updated
-
-        Raises:
-            CommandError
         """
         # check params
         self._check_parameters(

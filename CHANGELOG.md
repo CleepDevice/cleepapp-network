@@ -1,5 +1,9 @@
 # Changelog
 
+## [UNRELEASED]
+### Fixed
+- Fix documentation
+
 ## [2.0.4] - 2023-03-12
 
 * Improve code quality (lint + black)
