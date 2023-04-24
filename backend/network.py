@@ -981,11 +981,11 @@ class Network(CleepModule):
         Save wifi network configuration
 
         Args:
-            interface_name (string): interface name
-            network_name (string): network to connect interface to
-            encryption (string): encryption type (see WpaSupplicantConf.ENCRYPTION_TYPE_XXX)
-            password (string): network connection password
-            hidden (bool): True if network is hidden
+            interface_name (str): interface name
+            network_name (str): network to connect interface to
+            encryption (str): encryption type (see WpaSupplicantConf.ENCRYPTION_TYPE_XXX)
+            password (str, optional): network connection password. Defaults to None.
+            hidden (bool, optional): True if network is hidden. Defaults to False.
 
         Returns:
             bool: True if connection succeed
@@ -1045,9 +1045,9 @@ class Network(CleepModule):
         Update wifi network configuration
 
         Args:
-            interface (string): interface name
-            network (string): network to connect interface to
-            password (string): network connection password
+            interface_name (str): interface name
+            network_name (str): network to connect interface to
+            password (str): network connection password
 
         Returns:
             bool: True if update succeed
