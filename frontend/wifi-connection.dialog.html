@@ -4,8 +4,8 @@
             <div class="md-toolbar-tools">
                 <h2>Wifi connection</h2>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="dialogCtl.closeDialog()" aria-label="Close dialog">
-                    <md-icon md-svg-icon="close"></md-icon>
+                <md-button class="md-icon-button" ng-click="$ctrl.closeDialog()" aria-label="Close dialog">
+                    <cl-icon cl-mdi="close"></cl-icon>
                 </md-button>
             </div>
         </md-toolbar>
@@ -15,24 +15,24 @@
 
                 <!-- message -->
                 <div layout="row">
-                    <span>Set password to connect to {{dialogCtl.selectedNetwork.network}}.</span>
+                    <span>Set password to connect to {{$ctrl.selectedNetwork.network}}.</span>
                 </div>
 
                 <!-- password -->
                 <div layout="row">
                     <md-input-container class="md-block" flex-gt-sm>
                         <input
-                            ng-attr-type="{{dialogCtl.showPassword ? 'text' : 'password'}}"
-                            ng-model="dialogCtl.dialogData.wifiPassword"
+                            ng-attr-type="{{$ctrl.showPassword ? 'text' : 'password'}}"
+                            ng-model="$ctrl.dialogData.wifiPassword"
                             placeholder="password"
                         >
                     </md-input-container>
                     <div class="padding-row-with-input">
-                        <md-button class="md-icon-button" ng-click="dialogCtl.showPassword=!dialogCtl.showPassword" aria-label="Show password">
-                            <md-icon md-svg-icon="eye" ng-if="!dialogCtl.showPassword"></md-icon>
-                            <md-icon md-svg-icon="eye-off" ng-if="dialogCtl.showPassword"></md-icon>
-                            <md-tooltip md-direction="left" ng-if="!dialogCtl.showPassword">Show password</md-tooltip>
-                            <md-tooltip md-direction="left" ng-if="dialogCtl.showPassword">Hide password</md-tooltip>
+                        <md-button class="md-icon-button" ng-click="$ctrl.showPassword=!$ctrl.showPassword" aria-label="Show password">
+                            <cl-icon cl-mdi="eye" ng-if="!$ctrl.showPassword"></cl-icon>
+                            <cl-icon cl-mdi="eye-off" ng-if="$ctrl.showPassword"></cl-icon>
+                            <md-tooltip md-direction="left" ng-if="!$ctrl.showPassword">Show password</md-tooltip>
+                            <md-tooltip md-direction="left" ng-if="$ctrl.showPassword">Hide password</md-tooltip>
                         </md-button>
                     </div>
                 </div>
@@ -42,8 +42,8 @@
 
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-click="dialogCtl.closeDialog()" aria-label="Connect">
-                <md-icon md-svg-icon="lan-connect"></md-icon>
+            <md-button ng-click="$ctrl.closeDialog()" aria-label="Connect">
+                <cl-icon cl-mdi="lan-connect"></cl-icon>
                 <span>Connect</span>
             </md-button>
         </md-dialog-actions>

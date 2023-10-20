@@ -19,16 +19,15 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
             {label:'WPA2', value:'wpa2'}
         ];
         self.loading = false;
+        self.wiredNetworks = [];
+        self.wirelessNetworks = {};
+        self.wirelessButtons = [];
 
         /**
          * Block ui when loading stuff
          */
         self.networkLoading = function(block) {
-            if( block ) {
-                self.loading = true;
-            } else {
-                self.loading = false;
-            }
+            self.loading = block;
         };
 
         /**
@@ -55,13 +54,8 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
             $mdDialog.hide();
         };
 
-        /**
-         * Show interface configuration
-         * @param item: selected item
-         * @param type: type of network (wifi|wired)
-         */
-        self.showConfig = function(item, type, ev) {
-            self.selectedNetwork = item;
+        self.showConfig = function(meta) {
+            self.selectedNetwork = meta.network;
 
             $mdDialog.show({
                 controller: function($mdDialog) {
@@ -69,8 +63,8 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                     this.selectedNetwork = self.selectedNetwork;
                     this.cancelDialog = self.cancelDialog;
                 },
-                controllerAs: 'dialogCtl',
-                targetEvent: ev,
+                controllerAs: '$ctrl',
+                targetEvent: meta.event,
                 templateUrl: 'network-infos.dialog.html',
                 parent: angular.element(document.body),
                 clickOutsideToClose: true,
@@ -169,7 +163,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                     this.reconfigureWifiNetwork = self.reconfigureWifiNetwork;
                     this.forgetWifiNetwork = self.forgetWifiNetwork;
                 },
-                controllerAs: 'dialogCtl',
+                controllerAs: '$ctrl',
                 targetEvent: ev,
                 templateUrl: 'wifi-edit.dialog.html',
                 parent: angular.element(document.body),
@@ -320,7 +314,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                         this.cancelDialog = self.cancelDialog;
                         this.closeDialog = self.closeDialog;
                     },
-                    controllerAs: 'dialogCtl',
+                    controllerAs: '$ctrl',
                     targetEvent: ev,
                     templateUrl: 'wifi-connection.dialog.html',
                     parent: angular.element(document.body),
@@ -412,7 +406,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
         /**
          * Add hidden wifi network
          */
-        self.addHiddenWifiNetwork = function(ev) {
+        self.addHiddenWifiNetwork = function(event) {
             // fill dialog data
             self.dialogData = {
                 network: null,
@@ -430,8 +424,8 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                     this.cancelDialog = self.cancelDialog;
                     this.closeDialog = self.closeDialog;
                 },
-                controllerAs: 'dialogCtl',
-                targetEvent: ev,
+                controllerAs: '$ctrl',
+                targetEvent: event,
                 templateUrl: 'add-hidden-wifi.dialog.html',
                 parent: angular.element(document.body),
                 clickOutsideToClose: false,
@@ -472,6 +466,11 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
          * Controller init
          */
         self.$onInit = function() {
+            self.wirelessButtons.push(
+                { label: 'Connect to hidden network', icon: 'wifi-plus', click: self.addHiddenWifiNetwork, color: 'md-primary' },
+                { label: 'Scan wifi networks', icon: 'wifi-sync', click: self.refreshWifiNetworks, color: 'md-primary' },
+            );
+
             // load config
             cleepService.getModuleConfig('network')
                 .finally(function() {
@@ -479,7 +478,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                 });
 
             // enable active network scan
-            networkService.enableActiveNetworkScan()
+            networkService.enableActiveNetworkScan();
         };
 
         /**
@@ -500,9 +499,97 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
             function(newVal, oldVal) {
                 if( newVal && Object.keys(newVal).length ) {
                     Object.assign(self.config, newVal);
+
+                    // fill networks
+                    self.wiredNetworks.splice(0, self.wiredNetworks.length);
+                    Object.keys(self.wirelessNetworks).forEach((key) => delete self.wirelessNetworks[key]);
+                    for (const network of self.config.networks) {
+                        if (network.wifi) {
+                            self.fillWifiNetwork(network)
+                        } else {
+                            self.fillWiredNetwork(network)
+                        }
+                    }
                 }
             }
         );
+
+        self.fillWiredNetwork = function(network) {
+            const connected = self.config.networkstatus[network.interface].status === 2;
+            const label = connected ? 'connected with ip address ' + self.config.networkstatus[network.interface].ipaddress : 'not connected';
+
+            self.wiredNetworks.push({
+                title: network.network + ' : ' + label,
+                icon: 'ethernet',
+                clicks: [
+                    { icon: 'information', tooltip: 'Info', click: self.showConfig, meta: { network, type: 'wired' }, class: 'md-raised md-primary' },
+                    { icon: 'cog', tooltip: 'Configure', click: self.editWiredConfig, meta: { network }, class: 'md-primary md-raised' },
+                ],
+            });
+        };
+
+        self.fillWifiNetwork = function(network) {
+            if (!self.wirelessNetworks[network.interface]) {
+                self.wirelessNetworks[network.interface] = [];
+            }
+
+            const connected = self.config.networkstatus[network.interface].status === 2;
+            const label = self.getWifiLabel(network);
+            const secured = network.config.encryption === 'unsecured' 
+            const security = secured ? { icon: 'lock-open', tooltip: 'Insecured network' } : { icon: 'lock', tooltip : network.config.encryption + ' encryption' };
+            const signalIcon = self.getWifiSignalLevelIcon(network.config.signallevel || 0);
+            const interface = self.config.wifiinterfaces.length === 1 ? '' : ' (' + network.interface + ')';
+
+            const clicks = [
+                { icon: security.icon, tooltip: security.tooltip },
+                { icon: signalIcon, tooltip: 'Signal level ' + network.config.signallevel + '%' },
+                { icon: 'information', class: 'md-raised md-primary', tooltip: 'Info', click: self.showConfig, meta: { network, type: 'wifi' } },
+            ];
+            if (network.config.hidden) {
+                clicks.unshift({ icon: 'ghost', tooltip: 'Hidden network' });
+            }
+            if (network.config.configured) {
+                clicks.push({ icon: 'cog', class: 'md-raised md-primary', tooltip: 'Configure', click: self.editWifiConfig, meta: { network } });
+            } else {
+                clicks.push({ icon: 'lan-connect', class: 'md-raised md-primary', tooltip: 'Connect to network', click: self.connectWifiNetwork, meta: { network } });
+            }
+
+            self.wirelessNetworks[network.interface].push({
+                title: network.network + interface + ' : ' + label,
+                icon: 'wifi',
+                clicks,
+            });
+        };
+
+        self.getWifiLabel = function(network) {
+            switch (self.config.networkstatus[network.interface].status) {
+                case 0:
+                    return network.config.disabled ? 'not connected (disabled)' : 'not connected';
+                case 1:
+                    return 'connecting...';
+                case 2:
+                    if (self.config.networkstatus[network.interface].network !== network.network) {
+                        return 'not connected';
+                    }
+                    const ip = self.config.networkstatus[network.interface].ipaddress;
+                    return 'connected' + (ip ? ' with ip address ' + ip : '');
+                case 3:
+                    if (self.config.networkstatus[network.interface].network !== network.network) {
+                        return 'not connected';
+                    }
+                    return 'unable to connect, invalid password';
+                default:
+                    return 'not connected';
+            }
+        };
+
+        self.getWifiSignalLevelIcon = function(level) {
+            if (!level) return 'wifi-strength-off';
+            if (level <= 25) return 'wifi-strength-1';
+            if (level <= 50) return 'wifi-strength-2';
+            if (level <= 75) return 'wifi-strength-3';
+            return 'wifi-strength-4';
+        };
 
         /**
          * Handle network events
@@ -518,7 +605,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
         replace: true,
         scope: true,
         controller: networkController,
-        controllerAs: 'networkCtl',
+        controllerAs: '$ctrl',
     };
 }]);
 

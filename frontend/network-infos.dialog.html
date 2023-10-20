@@ -4,8 +4,8 @@
             <div class="md-toolbar-tools">
                 <h2>Connection infos</h2>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
-                    <md-icon md-svg-icon="close"></md-icon>
+                <md-button class="md-icon-button" ng-click="$ctrl.cancelDialog()" aria-label="Close dialog">
+                    <cl-icon cl-mdi="close"></cl-icon>
                 </md-button>
             </div>
         </md-toolbar>
@@ -13,68 +13,68 @@
         <md-dialog-content>
 
             <!-- wired network -->
-            <div class="md-dialog-content" ng-if="!dialogCtl.selectedNetwork.wifi">
+            <div class="md-dialog-content" ng-if="!$ctrl.selectedNetwork.wifi">
 
                 <!-- connection infos -->
-                <md-list ng-cloak ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status===2">
+                <md-list ng-cloak ng-if="$ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].status===2">
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">IP address:</span>
-                        {{dialogCtl.selectedNetwork.status.ipv4}}
+                        {{$ctrl.selectedNetwork.status.ipv4}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">MAC:</span>
-                        {{dialogCtl.selectedNetwork.status.mac}}
+                        {{$ctrl.selectedNetwork.status.mac}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">Gateway:</span>
-                        {{dialogCtl.selectedNetwork.status.gateway_ipv4 || 'No gateway info'}}
+                        {{$ctrl.selectedNetwork.status.gateway_ipv4 || 'No gateway info'}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">Netmask:</span>
-                        {{dialogCtl.selectedNetwork.status.netmask_ipv4}}
+                        {{$ctrl.selectedNetwork.status.netmask_ipv4}}
                     </md-list-item>
                 </md-list>
 
                 <!-- not connected -->
-                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status!==2">
+                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="$ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].status!==2">
                     <div>
-                        <md-icon md-svg-icon="cancel"></md-icon>
+                        <cl-icon cl-mdi="cancel"></cl-icon>
                         <span>Not connected</span>
                     </div>
                 </div>
             </div>
 
             <!-- wifi network -->
-            <div class="md-dialog-content" ng-if="dialogCtl.selectedNetwork.wifi">
+            <div class="md-dialog-content" ng-if="$ctrl.selectedNetwork.wifi">
 
                 <!-- wifi connection infos -->
-                <md-list ng-cloak ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status===2 && dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].network==dialogCtl.selectedNetwork.network">
+                <md-list ng-cloak ng-if="$ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].status===2 && $ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].network==$ctrl.selectedNetwork.network">
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">IP address:</span>
-                        {{dialogCtl.selectedNetwork.status.ipv4}}
+                        {{$ctrl.selectedNetwork.status.ipv4}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">MAC:</span>
-                        {{dialogCtl.selectedNetwork.status.mac}}
+                        {{$ctrl.selectedNetwork.status.mac}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">Gateway:</span>
-                        {{dialogCtl.selectedNetwork.status.gateway_ipv4 || 'No gateway info'}}
+                        {{$ctrl.selectedNetwork.status.gateway_ipv4 || 'No gateway info'}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">Netmask:</span>
-                        {{dialogCtl.selectedNetwork.status.netmask_ipv4}}
+                        {{$ctrl.selectedNetwork.status.netmask_ipv4}}
                     </md-list-item>
                     <md-list-item>
                         <span class="md-body-2" style="padding-right:10px;">Interface:</span>
-                        {{dialogCtl.selectedNetwork.status.interface}}
+                        {{$ctrl.selectedNetwork.status.interface}}
                     </md-list-item>
                 </md-list>
 
                 <!-- not connected -->
-                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].status!==2 || dialogCtl.config.networkstatus[dialogCtl.selectedNetwork.interface].network!=dialogCtl.selectedNetwork.network">
+                <div layout="row" layout-sm="column" layout-align="space-around" ng-if="$ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].status!==2 || $ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].network!=$ctrl.selectedNetwork.network">
                     <div>
-                        <md-icon md-svg-icon="cancel"></md-icon>
+                        <cl-icon cl-mdi="cancel"></cl-icon>
                         <span>Not connected</span>
                     </div>
                 </div>

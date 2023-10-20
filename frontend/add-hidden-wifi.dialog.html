@@ -4,8 +4,8 @@
             <div class="md-toolbar-tools">
                 <h2>Connect to hidden wifi network</h2>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
-                    <md-icon md-svg-icon="close"></md-icon>
+                <md-button class="md-icon-button" ng-click="$ctrl.cancelDialog()" aria-label="Close dialog">
+                    <cl-icon cl-mdi="close"></cl-icon>
                 </md-button>
             </div>
         </md-toolbar>
@@ -22,7 +22,7 @@
                     <div layout="row">
                         <md-input-container class="md-block" flex-gt-sm>
                             <label>Network name</label>
-                            <input type="text" ng-model="dialogCtl.dialogData.network">
+                            <input type="text" ng-model="$ctrl.dialogData.network">
                         </md>
                     </div>
 
@@ -30,8 +30,8 @@
                     <div layout="row">
                         <md-input-container class="md-block" flex-gt-sm>
                             <label>Network name</label>
-                            <md-select ng-model="dialogCtl.dialogData.encryption">
-                                <md-option ng-repeat="encryption in dialogCtl.encryptions" value="{{encryption.value}}">{{encryption.label}}</md-option>
+                            <md-select ng-model="$ctrl.dialogData.encryption">
+                                <md-option ng-repeat="encryption in $ctrl.encryptions" value="{{encryption.value}}">{{encryption.label}}</md-option>
                             </md-select>
                         </md>
                     </div>
@@ -40,23 +40,23 @@
                     <div layout="row">
                         <md-input-container class="md-block" flex-gt-sm>
                             <input
-                                ng-attr-type="{{dialogCtl.showPassword ? 'text' : 'password'}}"
-                                ng-disabled="dialogCtl.dialogData.encryption=='unsecured'"
-                                ng-model="dialogCtl.dialogData.password"
+                                ng-attr-type="{{$ctrl.showPassword ? 'text' : 'password'}}"
+                                ng-disabled="$ctrl.dialogData.encryption=='unsecured'"
+                                ng-model="$ctrl.dialogData.password"
                                 placeholder="password"
                             >
                         </md-input-container>
                         <div class="padding-row-with-input">
                             <md-button
                                 class="md-icon-button"
-                                ng-click="dialogCtl.showPassword=!dialogCtl.showPassword"
-                                ng-disabled="dialogCtl.dialogData.encryption=='unsecured'"
+                                ng-click="$ctrl.showPassword=!$ctrl.showPassword"
+                                ng-disabled="$ctrl.dialogData.encryption=='unsecured'"
                                 aria-label="Show password"
                             >
-                                <md-icon md-svg-icon="eye" ng-if="!dialogCtl.showPassword"></md-icon>
-                                <md-icon md-svg-icon="eye-off" ng-if="dialogCtl.showPassword"></md-icon>
-                                <md-tooltip md-direction="left" ng-if="!dialogCtl.showPassword">Show password</md-tooltip>
-                                <md-tooltip md-direction="left" ng-if="dialogCtl.showPassword">Hide password</md-tooltip>
+                                <cl-icon cl-mdi="eye" ng-if="!$ctrl.showPassword"></cl-icon>
+                                <cl-icon cl-mdi="eye-off" ng-if="$ctrl.showPassword"></cl-icon>
+                                <md-tooltip md-direction="left" ng-if="!$ctrl.showPassword">Show password</md-tooltip>
+                                <md-tooltip md-direction="left" ng-if="$ctrl.showPassword">Hide password</md-tooltip>
                             </md-button>
                         </div>
                     </div>
@@ -66,8 +66,8 @@
 
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-click="dialogCtl.closeDialog()" aria-label="Connect">
-                <md-icon md-svg-icon="lan-connect"></md-icon>
+            <md-button ng-click="$ctrl.closeDialog()" aria-label="Connect">
+                <cl-icon cl-mdi="lan-connect"></cl-icon>
                 <span>Connect</span>
             </md-button>
         </md-dialog-actions>

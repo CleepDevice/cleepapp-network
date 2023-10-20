@@ -4,6 +4,9 @@
 ### Fixed
 - Fix documentation
 
+### Updated
+- Use Cleep config components
+
 ## [2.0.4] - 2023-03-12
 
 * Improve code quality (lint + black)

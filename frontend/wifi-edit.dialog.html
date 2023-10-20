@@ -2,10 +2,10 @@
     <form ng-cloak>
         <md-toolbar>
             <div class="md-toolbar-tools">
-                <h2>{{dialogCtl.selectedNetwork.network}} network configuration</h2>
+                <h2>{{$ctrl.selectedNetwork.network}} network configuration</h2>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
-                    <md-icon md-svg-icon="close"></md-icon>
+                <md-button class="md-icon-button" ng-click="$ctrl.cancelDialog()" aria-label="Close dialog">
+                    <cl-icon cl-mdi="close"></cl-icon>
                 </md-button>
             </div>
         </md-toolbar>
@@ -18,39 +18,39 @@
                     <md-list-item class="md-2-line">
                         <div class="md-list-item-text" layout="column">
                             <h3>Change password</h3>
-                            <p ng-if="dialogCtl.selectedNetwork.config.encryption=='unsecured'">
+                            <p ng-if="$ctrl.selectedNetwork.config.encryption=='unsecured'">
                                 (disabled on unsecured network)
                             </p>
                         </div>
                         <div class="md-secondary">
                             <md-input-container class="no-margin">
                                 <input
-                                    ng-attr-type="{{dialogCtl.showPassword ? 'text' : 'password'}}"
+                                    ng-attr-type="{{$ctrl.showPassword ? 'text' : 'password'}}"
                                     placeholder="password"
-                                    ng-model="dialogCtl.dialogData.wifiPassword" 
-                                    ng-disabled="dialogCtl.selectedNetwork.config.encryption=='unsecured'"
+                                    ng-model="$ctrl.dialogData.wifiPassword" 
+                                    ng-disabled="$ctrl.selectedNetwork.config.encryption=='unsecured'"
                                     aria-label="password"
                                 >
                             </md-input-container>
                             <md-button
                                 class="md-icon-button"
-                                ng-click="dialogCtl.showPassword=!dialogCtl.showPassword"
+                                ng-click="$ctrl.showPassword=!$ctrl.showPassword"
                                 aria-label="Show password"
-                                ng-disabled="dialogCtl.selectedNetwork.config.encryption=='unsecured'"
+                                ng-disabled="$ctrl.selectedNetwork.config.encryption=='unsecured'"
                             >
-                                <md-icon md-svg-icon="eye" ng-if="!dialogCtl.showPassword"></md-icon>
-                                <md-icon md-svg-icon="eye-off" ng-if="dialogCtl.showPassword"></md-icon>
-                                <md-tooltip md-direction="left" ng-if="!dialogCtl.showPassword">Show password</md-tooltip>
-                                <md-tooltip md-direction="left" ng-if="dialogCtl.showPassword">Hide password</md-tooltip>
+                                <cl-icon cl-mdi="eye" ng-if="!$ctrl.showPassword"></cl-icon>
+                                <cl-icon cl-mdi="eye-off" ng-if="$ctrl.showPassword"></cl-icon>
+                                <md-tooltip md-direction="left" ng-if="!$ctrl.showPassword">Show password</md-tooltip>
+                                <md-tooltip md-direction="left" ng-if="$ctrl.showPassword">Hide password</md-tooltip>
                             </md-button>
                         </div>
                         <md-button
                             class="md-secondary md-raised"
-                            ng-click="dialogCtl.changeWifiPassword()"
+                            ng-click="$ctrl.changeWifiPassword()"
                             aria-label="Change passord"
-                            ng-disabled="dialogCtl.selectedNetwork.config.encryption=='unsecured'"
+                            ng-disabled="$ctrl.selectedNetwork.config.encryption=='unsecured'"
                         >
-                            <md-icon md-svg-icon="lock"></md-icon>
+                            <cl-icon cl-mdi="lock"></cl-icon>
                             Change
                         </md-button>
                     </md-list-item>
@@ -63,18 +63,18 @@
                         </div>
                         <md-button
                             class="md-secondary md-raised"
-                            ng-if="!dialogCtl.selectedNetwork.config.disabled"
-                            ng-click="dialogCtl.disableWifiNetwork()"
+                            ng-if="!$ctrl.selectedNetwork.config.disabled"
+                            ng-click="$ctrl.disableWifiNetwork()"
                         >
-                            <md-icon md-svg-icon="sleep"></md-icon>
+                            <cl-icon cl-mdi="sleep"></cl-icon>
                             Disable
                         </md-button>
                         <md-button
                             class="md-secondary md-raised"
-                            ng-if="dialogCtl.selectedNetwork.config.disabled"
-                            ng-click="dialogCtl.enableWifiNetwork()"
+                            ng-if="$ctrl.selectedNetwork.config.disabled"
+                            ng-click="$ctrl.enableWifiNetwork()"
                         >
-                            <md-icon md-svg-icon="sleep-off"></md-icon>
+                            <cl-icon cl-mdi="sleep-off"></cl-icon>
                             Enable
                         </md-button>
                     </md-list-item>
@@ -85,8 +85,8 @@
                             <h3>Reconfigure network</h3>
                             <p>In case of trouble try network reconfiguration</p>
                         </div>
-                        <md-button class="md-secondary md-raised" ng-click="dialogCtl.reconfigureWifiNetwork()">
-                            <md-icon md-svg-icon="cog"></md-icon>
+                        <md-button class="md-secondary md-raised" ng-click="$ctrl.reconfigureWifiNetwork()">
+                            <cl-icon cl-mdi="cog"></cl-icon>
                             Reconfigure
                         </md-button>
                     </md-list-item>
@@ -97,8 +97,8 @@
                             <h3>Forget network configuration</h3>
                             <p>Network configuration is deleted forever</p>
                         </div>
-                        <md-button class="md-secondary md-accent md-raised" ng-click="dialogCtl.forgetWifiNetwork()">
-                            <md-icon md-svg-icon="delete"></md-icon>
+                        <md-button class="md-secondary md-accent md-raised" ng-click="$ctrl.forgetWifiNetwork()">
+                            <cl-icon cl-mdi="delete"></cl-icon>
                             Forget
                         </md-button>
                     </md-list-item>
