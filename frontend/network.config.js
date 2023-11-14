@@ -492,17 +492,15 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
         /**
          * Watch configuration changes
          */
-        $rootScope.$watch(
-            function() {
-                return cleepService.modules['network'].config;
-            },
-            function(newVal, oldVal) {
+        $rootScope.$watchCollection(
+            () => cleepService.modules['network'].config,
+            (newVal) => {
                 if( newVal && Object.keys(newVal).length ) {
                     Object.assign(self.config, newVal);
 
                     // fill networks
-                    self.wiredNetworks.splice(0, self.wiredNetworks.length);
-                    Object.keys(self.wirelessNetworks).forEach((key) => delete self.wirelessNetworks[key]);
+                    self.wiredNetworks = [];
+                    self.wirelessNetworks = [];
                     for (const network of self.config.networks) {
                         if (network.wifi) {
                             self.fillWifiNetwork(network)
@@ -511,7 +509,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                         }
                     }
                 }
-            }
+            },
         );
 
         self.fillWiredNetwork = function(network) {
@@ -522,8 +520,8 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                 title: network.network + ' : ' + label,
                 icon: 'ethernet',
                 clicks: [
-                    { icon: 'information', tooltip: 'Info', click: self.showConfig, meta: { network, type: 'wired' }, class: 'md-raised md-primary' },
-                    { icon: 'cog', tooltip: 'Configure', click: self.editWiredConfig, meta: { network }, class: 'md-primary md-raised' },
+                    { icon: 'information', tooltip: 'Info', click: self.showConfig, meta: { network, type: 'wired' }, style: 'md-raised md-primary' },
+                    { icon: 'cog', tooltip: 'Configure', click: self.editWiredConfig, meta: { network }, style: 'md-primary md-raised' },
                 ],
             });
         };
@@ -543,15 +541,15 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
             const clicks = [
                 { icon: security.icon, tooltip: security.tooltip },
                 { icon: signalIcon, tooltip: 'Signal level ' + network.config.signallevel + '%' },
-                { icon: 'information', class: 'md-raised md-primary', tooltip: 'Info', click: self.showConfig, meta: { network, type: 'wifi' } },
+                { icon: 'information', style: 'md-raised md-primary', tooltip: 'Info', click: self.showConfig, meta: { network, type: 'wifi' } },
             ];
             if (network.config.hidden) {
                 clicks.unshift({ icon: 'ghost', tooltip: 'Hidden network' });
             }
             if (network.config.configured) {
-                clicks.push({ icon: 'cog', class: 'md-raised md-primary', tooltip: 'Configure', click: self.editWifiConfig, meta: { network } });
+                clicks.push({ icon: 'cog', style: 'md-raised md-primary', tooltip: 'Configure', click: self.editWifiConfig, meta: { network } });
             } else {
-                clicks.push({ icon: 'lan-connect', class: 'md-raised md-primary', tooltip: 'Connect to network', click: self.connectWifiNetwork, meta: { network } });
+                clicks.push({ icon: 'lan-connect', style: 'md-raised md-primary', tooltip: 'Connect to network', click: self.connectWifiNetwork, meta: { network } });
             }
 
             self.wirelessNetworks[network.interface].push({
