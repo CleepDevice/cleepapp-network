@@ -5,7 +5,7 @@
                 <h2>Connection infos</h2>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="$ctrl.cancelDialog()" aria-label="Close dialog">
-                    <cl-icon cl-mdi="close"></cl-icon>
+                    <cl-icon cl-icon="close"></cl-icon>
                 </md-button>
             </div>
         </md-toolbar>
@@ -38,7 +38,7 @@
                 <!-- not connected -->
                 <div layout="row" layout-sm="column" layout-align="space-around" ng-if="$ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].status!==2">
                     <div>
-                        <cl-icon cl-mdi="cancel"></cl-icon>
+                        <cl-icon cl-icon="cancel"></cl-icon>
                         <span>Not connected</span>
                     </div>
                 </div>
@@ -74,7 +74,7 @@
                 <!-- not connected -->
                 <div layout="row" layout-sm="column" layout-align="space-around" ng-if="$ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].status!==2 || $ctrl.config.networkstatus[$ctrl.selectedNetwork.interface].network!=$ctrl.selectedNetwork.network">
                     <div>
-                        <cl-icon cl-mdi="cancel"></cl-icon>
+                        <cl-icon cl-icon="cancel"></cl-icon>
                         <span>Not connected</span>
                     </div>
                 </div>
