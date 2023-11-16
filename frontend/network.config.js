@@ -103,7 +103,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                     this.cancelDialog = self.cancelDialog;
                     this.closeDialog = self.closeDialog;
                 },
-                controllerAs: 'dialogCtl',
+                controllerAs: '$ctrl',
                 targetEvent: ev,
                 templateUrl: 'wired-edit.dialog.html',
                 parent: angular.element(document.body),

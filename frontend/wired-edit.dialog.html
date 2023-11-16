@@ -4,7 +4,7 @@
             <div class="md-toolbar-tools">
                 <h2>Edit wired connection</h2>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+                <md-button class="md-icon-button" ng-click="$ctrl.cancelDialog()" aria-label="Close dialog">
                     <cl-icon cl-mdi="close"></cl-icon>
                 </md-button>
             </div>
@@ -16,29 +16,29 @@
                 <!-- dhcp -->
                 <md-input-container class="md-block">
                     <label>Mode</label>
-                    <md-select name="dhcp" ng-model="dialogCtl.dialogData.dhcp" required>
+                    <md-select name="dhcp" ng-model="$ctrl.dialogData.dhcp" required>
                         <md-option ng-value="true">Automatic</md-option>
                         <md-option ng-value="false">Manual (expert mode)</md-option>
                     </md-select>
                 </md-input-container>
 
                 <!-- wired auto -->
-                <md-input-container class="md-block" ng-if="dialogCtl.dialogData.dhcp" flex-gt-sm>
+                <md-input-container class="md-block" ng-if="$ctrl.dialogData.dhcp" flex-gt-sm>
                     <span>Your network will automatically assign an ip address to your device.</span>
                 </md-input-container> 
 
                 <!-- wired static -->
-                <md-input-container class="md-block" ng-if="!dialogCtl.dialogData.dhcp" flex-gt-sm>
+                <md-input-container class="md-block" ng-if="!$ctrl.dialogData.dhcp" flex-gt-sm>
                     <label>Ip address</label>
-                    <input ng-model="dialogCtl.dialogData.ipv4">
+                    <input ng-model="$ctrl.dialogData.ipv4">
                 </md-input-container>
-                <md-input-container class="md-block" ng-if="!dialogCtl.dialogData.dhcp" flex-gt-sm>
+                <md-input-container class="md-block" ng-if="!$ctrl.dialogData.dhcp" flex-gt-sm>
                     <label>Gateway address</label>
-                    <input ng-model="dialogCtl.dialogData.gateway_ipv4">
+                    <input ng-model="$ctrl.dialogData.gateway_ipv4">
                 </md-input-container>
-                <md-input-container class="md-block" ng-if="!dialogCtl.dialogData.dhcp" flex-gt-sm>
+                <md-input-container class="md-block" ng-if="!$ctrl.dialogData.dhcp" flex-gt-sm>
                     <label>Netmask</label>
-                    <input ng-model="dialogCtl.dialogData.netmask_ipv4">
+                    <input ng-model="$ctrl.dialogData.netmask_ipv4">
                 </md-input-container>
 
             </div>
@@ -46,10 +46,10 @@
 
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-click="dialogCtl.cancelDialog()" aria-label="Close dialog">
+            <md-button ng-click="$ctrl.cancelDialog()" aria-label="Close dialog">
                 <span>Cancel</span>
             </md-button>
-            <md-button ng-click="dialogCtl.closeDialog()" aria-label="Valid dialog">
+            <md-button ng-click="$ctrl.closeDialog()" aria-label="Valid dialog">
                 <span>Save</span>
             </md-button>
         </md-dialog-actions>
