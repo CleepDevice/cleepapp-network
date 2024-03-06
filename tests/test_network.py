@@ -16,7 +16,7 @@ from cleep.exception import (
 )
 from cleep.libs.tests import session
 from cleep.libs.tests.common import get_log_level
-from mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock
 
 LOG_LEVEL = get_log_level()
 
@@ -207,7 +207,7 @@ class TestNetwork(unittest.TestCase):
         mock_ifupdown.reset_mock()
 
     def init_session(self, start_module=True):
-        self.module = self.session.setup(Network)
+        self.module = self.session.setup(Network, mock_on_start=False, mock_on_stop=False)
         if start_module:
             self.session.start_module(self.module)
 
