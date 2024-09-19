@@ -3,7 +3,6 @@
 
 import time
 import copy
-from threading import Timer
 import netifaces
 from cleep.exception import CommandError
 from cleep.core import CleepModule
@@ -19,7 +18,6 @@ from cleep.libs.commands.ifupdown import Ifupdown
 from cleep.libs.commands.rfkill import Rfkill
 from cleep.libs.commands.wpacli import Wpacli
 from cleep.libs.configs.cleepwificonf import CleepWifiConf
-from cleep.libs.internals.task import Task
 
 __all__ = ["Network"]
 
@@ -169,9 +167,7 @@ class Network(CleepModule):
             self.rfkill.unblock_device(None)
 
         # launch network watchdog
-        self.__network_watchdog_task = Task(
-            1.0, self._check_network_connection, self.logger
-        )
+        self.__network_watchdog_task = self.task_factory.create_task(1.0, self._check_network_connection)
         self.__network_watchdog_task.start()
 
     def _on_stop(self):
@@ -181,7 +177,7 @@ class Network(CleepModule):
         if self.__network_watchdog_task:
             self.__network_watchdog_task.stop()
         if self.__network_scan_duration_timer:
-            self.__network_scan_duration_timer.cancel()
+            self.__network_scan_duration_timer.stop()
 
     def _load_cleep_wifi_conf(self):
         """
@@ -499,13 +495,11 @@ class Network(CleepModule):
         self.__network_scan_duration = 1
 
         if self.__network_scan_duration_timer:
-            self.__network_scan_duration_timer.cancel()
+            self.__network_scan_duration_timer.stop()
 
-        self.__network_scan_duration_timer = Timer(
+        self.__network_scan_duration_timer = self.task_factory.create_task(
             Network.ACTIVE_SCAN_TIMEOUT, self.disable_active_network_scan
         )
-        self.__network_scan_duration_timer.daemon = True
-        self.__network_scan_duration_timer.name = "network_scan_duration_timer"
         self.__network_scan_duration_timer.start()
 
     def disable_active_network_scan(self):
@@ -514,7 +508,7 @@ class Network(CleepModule):
         """
         self.logger.debug("Disable active network scan")
         if self.__network_scan_duration_timer:
-            self.__network_scan_duration_timer.cancel()
+            self.__network_scan_duration_timer.stop()
             self.__network_scan_duration_timer = None
 
         self.__network_scan_duration = Network.NETWORK_SCAN_DURATION

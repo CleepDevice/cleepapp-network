@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from cleep.libs.tests import session
 import unittest
 import logging
 import sys
@@ -14,7 +15,6 @@ from cleep.exception import (
     Unauthorized,
     CommandInfo,
 )
-from cleep.libs.tests import session
 from cleep.libs.tests.common import get_log_level
 from unittest.mock import Mock, patch, MagicMock
 
@@ -29,7 +29,6 @@ mock_iwlist = Mock()
 mock_iwconfig = Mock()
 mock_wpacli = Mock()
 mock_cleepwificonf = Mock()
-mock_task = Mock()
 mock_ifconfig = Mock()
 mock_netifaces = Mock()
 mock_ifupdown = Mock()
@@ -45,7 +44,6 @@ mock_time = Mock()
 @patch("backend.network.Iwconfig", mock_iwconfig)
 @patch("backend.network.Wpacli", mock_wpacli)
 @patch("backend.network.CleepWifiConf", mock_cleepwificonf)
-@patch("backend.network.Task", mock_task)
 @patch("backend.network.Ifconfig", mock_ifconfig)
 @patch("backend.network.netifaces", mock_netifaces)
 @patch("backend.network.Ifupdown", mock_ifupdown)
@@ -195,7 +193,6 @@ class TestNetwork(unittest.TestCase):
     def tearDown(self):
         self.session.clean()
         mock_cleepwificonf.reset_mock()
-        mock_task.reset_mock()
         mock_wpasupplicantconf.reset_mock()
         mock_iw.reset_mock()
         mock_ip.reset_mock()
@@ -265,22 +262,30 @@ class TestNetwork(unittest.TestCase):
         mock_cleepwificonf.return_value.exists.assert_called()
 
     def test_on_start(self):
-        self.init_session()
+        self.init_session(start_module=False)
+        mock_task = Mock()
+        self.session.task_factory.create_task = Mock(return_value=mock_task)
 
-        mock_task.return_value.start.assert_called()
-        mock_task.assert_called_with(
-            1.0, self.module._check_network_connection, self.module.logger
+        self.module._on_start()
+
+        self.session.task_factory.create_task.assert_called_with(
+            1.0, self.module._check_network_connection
         )
+        mock_task.start.assert_called()
 
     def test_on_stop(self):
-        self.init_session()
+        self.init_session(start_module=False)
+        # declare existing scan_duration_timer to check it is stopped during on_stop call
         mock_timer = Mock()
         self.module._Network__network_scan_duration_timer = mock_timer
+        mock_task = Mock()
+        self.session.task_factory.create_task = Mock(return_value=mock_task)
 
+        self.module._on_start()
         self.module._on_stop()
 
-        mock_task.return_value.stop.assert_called()
-        mock_timer.cancel.assert_called()
+        mock_task.stop.assert_called()
+        mock_timer.stop.assert_called()
 
     def test_load_cleep_wifi_conf(self):
         self.init_session()
@@ -818,32 +823,34 @@ class TestNetwork(unittest.TestCase):
 
         mock_wpasupplicantconf.return_value.set_country_alpha2.assert_called_with("FR")
 
-    @patch("backend.network.Timer")
-    def test_enable_active_network_scan(self, mock_timer):
+    def test_enable_active_network_scan(self):
         self.init_session()
+        mock_task = Mock()
+        self.session.task_factory.create_task = Mock(return_value=mock_task)
 
         self.module.enable_active_network_scan()
 
-        mock_timer.assert_called_with(
+        self.session.task_factory.create_task.assert_called_with(
             self.module.ACTIVE_SCAN_TIMEOUT, self.module.disable_active_network_scan
         )
-        mock_timer.return_value.start.assert_called()
+        mock_task.start.assert_called()
         self.assertEqual(self.module._Network__network_scan_duration, 1)
 
-    @patch("backend.network.Timer")
-    def test_enable_active_network_scan_restart_timer(self, mock_timer):
+    def test_enable_active_network_scan_restart_timer(self):
         self.init_session()
-        mock_old_timer = Mock()
-        self.module._Network__network_scan_duration_timer = mock_old_timer
+        mock_task = Mock()
+        self.session.task_factory.create_task = Mock(return_value=mock_task)
+        mock_old_task = Mock()
+        self.module._Network__network_scan_duration_timer = mock_old_task
 
         self.module.enable_active_network_scan()
 
-        mock_timer.assert_called_with(
+        self.session.task_factory.create_task.assert_called_with(
             self.module.ACTIVE_SCAN_TIMEOUT, self.module.disable_active_network_scan
         )
-        mock_timer.return_value.start.assert_called()
+        mock_task.start.assert_called()
         self.assertEqual(self.module._Network__network_scan_duration, 1)
-        mock_old_timer.cancel.assert_called()
+        mock_old_task.stop.assert_called()
 
     def test_disable_active_network_scan(self):
         self.init_session()
@@ -852,7 +859,7 @@ class TestNetwork(unittest.TestCase):
 
         self.module.disable_active_network_scan()
 
-        mock_old_timer.cancel.assert_called()
+        mock_old_timer.stop.assert_called()
         self.assertEqual(
             self.module._Network__network_scan_duration,
             self.module.NETWORK_SCAN_DURATION,
@@ -2156,5 +2163,5 @@ class TestNetwork(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # coverage run --omit="*lib/python*/*","test_*" --concurrency=thread test_network.py; coverage report -m -i
+    # coverage run --include="**/backend/**/*.py" --concurrency=thread test_network.py; coverage report -m -i
     unittest.main()
