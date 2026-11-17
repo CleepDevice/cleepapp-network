@@ -1,10 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- WPA3-Personal (SAE) wifi encryption support
+- Load wifi bootstrap config from `/boot/cleep-network.json` (fallback to `cleepwifi.conf`)
+
 ## [2.1.0] - 2024-09-30
+
 ### Fixed
+
 - Fix documentation
 
 ### Changed
+
 - Use TaskFactory
 
 ### Updated

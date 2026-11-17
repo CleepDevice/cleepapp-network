@@ -3,8 +3,10 @@
 
 import time
 import copy
+import os
+import re
 import netifaces
-from cleep.exception import CommandError
+from cleep.exception import CommandError, InvalidParameter, MissingParameter
 from cleep.core import CleepModule
 from cleep.libs.configs.wpasupplicantconf import WpaSupplicantConf
 from cleep.libs.configs.dhcpcdconf import DhcpcdConf
@@ -43,7 +45,7 @@ class Network(CleepModule):
     """
 
     MODULE_AUTHOR = "Cleep"
-    MODULE_VERSION = "2.1.0"
+    MODULE_VERSION = "2.2.0"
     MODULE_CATEGORY = "APPLICATION"
     MODULE_DEPS = []
     MODULE_DESCRIPTION = "Configure how your device connect to your network"
@@ -65,6 +67,11 @@ class Network(CleepModule):
 
     TYPE_WIRED = "wired"
     TYPE_WIFI = "wifi"
+
+    # WPA3-Personal (SAE). Kept here until core WpaSupplicantConf exposes it.
+    ENCRYPTION_TYPE_WPA3 = "wpa3"
+    CLEEP_NETWORK_CONF = "/boot/cleep-network.json"
+    WPASUPPLICANT_DIR = "/etc/wpa_supplicant"
 
     NETWORK_SCAN_DURATION = 60
     ACTIVE_SCAN_TIMEOUT = 10 * 60
@@ -151,16 +158,20 @@ class Network(CleepModule):
             for interface_name in add_country_for_interfaces:
                 self.wpacli.reconfigure_interface(interface_name)
 
-        # handle startup config if cleepwifi.conf exists
-        if self.cleepwifi.exists():
-            self.logger.info("Cleepwifi.conf file found. Load wifi config")
+        # handle startup wifi config (cleep-network.json from desktop, legacy cleepwifi.conf)
+        bootstrap = self._get_bootstrap_wifi_configuration()
+        if bootstrap:
+            source, conf, encrypt_password, cleanup = bootstrap
+            self.logger.info("%s file found. Load wifi config", source)
             try:
-                self._load_cleep_wifi_conf()
+                self._load_bootstrap_wifi_conf(
+                    conf, encrypt_password=encrypt_password, source=source
+                )
             except Exception:
-                self.logger.exception("Error loading cleepwifi.conf file:")
+                self.logger.exception("Error loading %s file:", source)
                 self.crash_report.report_exception()
             finally:
-                self.cleepwifi.delete(self.cleep_filesystem)
+                cleanup()
 
         # enable wifi with rfkill
         if self.rfkill.is_installed():
@@ -179,6 +190,171 @@ class Network(CleepModule):
         if self.__network_scan_duration_timer:
             self.__network_scan_duration_timer.stop()
 
+    def _get_allowed_encryptions(self):
+        """
+        Return encryption types accepted by this module (core types + WPA3).
+
+        Returns:
+            list: encryption type strings
+        """
+        encryptions = list(WpaSupplicantConf.ENCRYPTION_TYPES)
+        if Network.ENCRYPTION_TYPE_WPA3 not in encryptions:
+            encryptions.append(Network.ENCRYPTION_TYPE_WPA3)
+        return encryptions
+
+    def _wpa_supplicant_path(self, interface=None):
+        """
+        Return wpa_supplicant conf path for interface.
+
+        Args:
+            interface (str|None): interface name
+
+        Returns:
+            str: conf filepath
+        """
+        interface_prefix = "-%s" % interface if interface else ""
+        return os.path.join(
+            Network.WPASUPPLICANT_DIR,
+            "wpa_supplicant%s.conf" % interface_prefix,
+        )
+
+    def _is_wpa3_network(self, network_name, interface=None):
+        """
+        Return True if network block uses SAE (WPA3-Personal).
+
+        Args:
+            network_name (str): SSID
+            interface (str|None): interface name
+
+        Returns:
+            bool: True if WPA3/SAE network
+        """
+        lines = self.cleep_filesystem.read_data(self._wpa_supplicant_path(interface))
+        if not lines or not isinstance(lines, (list, tuple)):
+            return False
+        content = "".join(lines)
+        for match in re.finditer(r"network\s*=\s*\{([^}]*)\}", content, re.DOTALL):
+            block = match.group(1)
+            ssid_match = re.search(r'ssid\s*=\s*"([^"]*)"', block)
+            if not ssid_match or ssid_match.group(1) != network_name:
+                continue
+            return bool(re.search(r"key_mgmt\s*=\s*SAE\b", block))
+        return False
+
+    def _add_wpa3_network(self, network_name, password, hidden=False, interface=None):
+        """
+        Append a WPA3-Personal (SAE) network block to wpa_supplicant.conf.
+
+        Args:
+            network_name (str): SSID
+            password (str): plaintext passphrase (SAE requires quoted passphrase)
+            hidden (bool): hidden network flag
+            interface (str|None): interface name
+
+        Returns:
+            bool: True if network added
+
+        Raises:
+            MissingParameter, InvalidParameter
+        """
+        if network_name is None or len(network_name) == 0:
+            raise MissingParameter('Parameter "network" is missing')
+        if password is None or len(password) == 0:
+            raise MissingParameter('Parameter "password" is missing')
+        if self.wpasupplicantconf.get_configuration(network_name, interface) is not None:
+            raise InvalidParameter('Network "%s" is already configured' % network_name)
+
+        if not self.wpasupplicantconf.has_config(interface):
+            self.wpasupplicantconf.save_default_config(interface)
+
+        def escape_conf(value):
+            return value.replace("\\", "\\\\").replace('"', '\\"')
+
+        block = [
+            "\nnetwork={\n",
+            '\tssid="%s"\n' % escape_conf(network_name),
+            "\tkey_mgmt=SAE\n",
+            '\tpsk="%s"\n' % escape_conf(password),
+        ]
+        if hidden:
+            block.append("\tscan_ssid=1\n")
+        block.append("}\n")
+
+        path = self._wpa_supplicant_path(interface)
+        lines = self.cleep_filesystem.read_data(path)
+        if lines is None:
+            return False
+        return self.cleep_filesystem.write_data(path, "".join(lines) + "".join(block))
+
+    def _add_wifi_network(
+        self,
+        network_name,
+        encryption,
+        password,
+        hidden=False,
+        interface=None,
+        encrypt_password=True,
+    ):
+        """
+        Add wifi network to wpa_supplicant, with WPA3 fallback when core lacks it.
+
+        Args:
+            network_name (str): SSID
+            encryption (str): encryption type
+            password (str): password
+            hidden (bool): hidden network flag
+            interface (str|None): interface name
+            encrypt_password (bool): encrypt WPA/WPA2 password via wpa_passphrase
+
+        Returns:
+            bool: True if network added
+        """
+        if (
+            encryption == Network.ENCRYPTION_TYPE_WPA3
+            and Network.ENCRYPTION_TYPE_WPA3
+            not in WpaSupplicantConf.ENCRYPTION_TYPES
+        ):
+            return self._add_wpa3_network(
+                network_name, password, hidden=hidden, interface=interface
+            )
+
+        return self.wpasupplicantconf.add_network(
+            network_name,
+            encryption,
+            password,
+            hidden=hidden,
+            interface=interface,
+            encrypt_password=encrypt_password,
+        )
+
+    def _get_bootstrap_wifi_configuration(self):
+        """
+        Return first available bootstrap wifi config from boot partition.
+
+        Prefers cleep-network.json (CleepDesktop), falls back to legacy cleepwifi.conf.
+
+        Returns:
+            tuple|None: (source, conf, encrypt_password, cleanup) or None
+        """
+        if os.path.exists(Network.CLEEP_NETWORK_CONF):
+            conf = self.cleep_filesystem.read_json(Network.CLEEP_NETWORK_CONF)
+            return (
+                "cleep-network.json",
+                conf,
+                True,
+                lambda: self.cleep_filesystem.rm(Network.CLEEP_NETWORK_CONF),
+            )
+
+        if self.cleepwifi.exists():
+            return (
+                "cleepwifi.conf",
+                self.cleepwifi.get_configuration(),
+                False,
+                lambda: self.cleepwifi.delete(self.cleep_filesystem),
+            )
+
+        return None
+
     def _load_cleep_wifi_conf(self):
         """
         Load cleepwifi.conf
@@ -186,11 +362,24 @@ class Network(CleepModule):
         Notes:
             This function does not check file existence
         """
-        # read file content
-        cleep_conf = self.cleepwifi.get_configuration()
-        self.logger.debug("cleep_conf: %s", cleep_conf)
+        self._load_bootstrap_wifi_conf(
+            self.cleepwifi.get_configuration(),
+            encrypt_password=False,
+            source="cleepwifi.conf",
+        )
+
+    def _load_bootstrap_wifi_conf(self, cleep_conf, encrypt_password=False, source="cleepwifi.conf"):
+        """
+        Apply bootstrap wifi configuration to wpa_supplicant.
+
+        Args:
+            cleep_conf (dict): configuration (network, password, encryption, hidden)
+            encrypt_password (bool): True when password is plaintext (cleep-network.json)
+            source (str): filename used in log messages
+        """
+        self.logger.debug("cleep_conf (%s): %s", source, cleep_conf)
         if not cleep_conf:
-            self.logger.warning("Cleepwifi file content is empty or invalid")
+            self.logger.warning("%s file content is empty or invalid", source)
             return
 
         # search for network in interface
@@ -204,7 +393,9 @@ class Network(CleepModule):
             ):
                 self.logger.debug('Interface "%s" found', interface_name)
                 found_interface = interface_name
-                found_encryption = networks[cleep_conf["network"]]["encryption"]
+                # Scan often reports WPA2 for WPA3 APs; keep file encryption for WPA3
+                if cleep_conf["encryption"] != Network.ENCRYPTION_TYPE_WPA3:
+                    found_encryption = networks[cleep_conf["network"]]["encryption"]
                 break
         if cleep_conf["hidden"] and not found_interface and self.wifi_networks:
             # network is declared as hidden, save hidden network in first available interface
@@ -212,19 +403,19 @@ class Network(CleepModule):
 
         # add config if not already exists
         if found_interface or cleep_conf["hidden"]:
-            if not self.wpasupplicantconf.add_network(
+            if not self._add_wifi_network(
                 cleep_conf["network"],
                 found_encryption,
                 cleep_conf["password"],
                 hidden=cleep_conf["hidden"],
                 interface=found_interface,
-                encrypt_password=False,
+                encrypt_password=encrypt_password,
             ):
-                self.logger.error("Unable to use config from cleepwifi.conf")
+                self.logger.error("Unable to use config from %s", source)
             else:
                 if found_interface:
                     self.reconfigure_wifi_interface(found_interface)
-                self.logger.info("Wifi config from cleepwifi.conf loaded successfully")
+                self.logger.info("Wifi config from %s loaded successfully", source)
         else:
             self.logger.warning(
                 'Interface was not found for network "%s" or network is already configured',
@@ -895,6 +1086,8 @@ class Network(CleepModule):
             if network_name in wifi_config:
                 network["configured"] = True
                 network["disabled"] = wifi_config[network_name]["disabled"]
+                if self._is_wpa3_network(network_name, interface_name):
+                    network["encryption"] = Network.ENCRYPTION_TYPE_WPA3
             else:
                 network["configured"] = False
                 network["disabled"] = False
@@ -902,8 +1095,11 @@ class Network(CleepModule):
         # add hidden network
         for network_name, network_config in wifi_config.items():
             if network_config["hidden"]:
+                encryption = network_config["encryption"]
+                if self._is_wpa3_network(network_config["network"], interface_name):
+                    encryption = Network.ENCRYPTION_TYPE_WPA3
                 networks[network_config["network"]] = {
-                    "encryption": network_config["encryption"],
+                    "encryption": encryption,
                     "interface": interface_name,
                     "network": network_config["network"],
                     "configured": True,
@@ -977,7 +1173,7 @@ class Network(CleepModule):
         Args:
             interface_name (str): interface name
             network_name (str): network to connect interface to
-            encryption (str): encryption type (see WpaSupplicantConf.ENCRYPTION_TYPE_XXX)
+            encryption (str): encryption type (see WpaSupplicantConf.ENCRYPTION_TYPE_XXX + wpa3)
             password (str, optional): network connection password. Defaults to None.
             hidden (bool, optional): True if network is hidden. Defaults to False.
 
@@ -993,13 +1189,13 @@ class Network(CleepModule):
                     "name": "encryption",
                     "value": encryption,
                     "type": str,
-                    "validator": lambda val: val in WpaSupplicantConf.ENCRYPTION_TYPES,
+                    "validator": lambda val: val in self._get_allowed_encryptions(),
                 },
             ]
         )
 
         # save config in wpa_supplicant.conf file
-        if not self.wpasupplicantconf.add_network(
+        if not self._add_wifi_network(
             network_name, encryption, password, hidden, interface=interface_name
         ):
             raise CommandError("Unable to save network configuration")
@@ -1054,6 +1250,26 @@ class Network(CleepModule):
                 {"name": "password", "value": password, "type": str},
             ]
         )
+
+        # WPA3/SAE: core update path would rewrite the network as WPA2-PSK
+        if self._is_wpa3_network(network_name, interface_name):
+            config = self.wpasupplicantconf.get_configuration(
+                network_name, interface_name
+            )
+            if config is None:
+                raise CommandError("Unable to update network password")
+            if not self.wpasupplicantconf.delete_network(
+                network_name, interface=interface_name
+            ):
+                raise CommandError("Unable to update network password")
+            if not self._add_wpa3_network(
+                network_name,
+                password,
+                hidden=config.get("hidden", False),
+                interface=interface_name,
+            ):
+                raise CommandError("Unable to update network password")
+            return self.wpacli.reconfigure_interface(interface_name)
 
         if not self.wpasupplicantconf.update_network_password(
             network_name, password, interface=interface_name

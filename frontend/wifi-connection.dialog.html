@@ -18,6 +18,16 @@
                     <span>Set password to connect to {{$ctrl.selectedNetwork.network}}.</span>
                 </div>
 
+                <!-- encryption (scan may report WPA2 for WPA3 APs) -->
+                <div layout="row">
+                    <md-input-container class="md-block" flex>
+                        <label>Encryption</label>
+                        <md-select ng-model="$ctrl.dialogData.encryption">
+                            <md-option ng-repeat="encryption in $ctrl.encryptions" value="{{encryption.value}}">{{encryption.label}}</md-option>
+                        </md-select>
+                    </md-input-container>
+                </div>
+
                 <!-- password -->
                 <div layout="row">
                     <md-input-container class="md-block" flex-gt-sm>

@@ -16,7 +16,8 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
             {label:'No security', value:'unsecured'},
             {label:'WEP', value:'wep'},
             {label:'WPA', value:'wpa'},
-            {label:'WPA2', value:'wpa2'}
+            {label:'WPA2', value:'wpa2'},
+            {label:'WPA3', value:'wpa3'}
         ];
         self.loading = false;
         self.wiredNetworks = [];
@@ -302,6 +303,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
             // fill dialog data
             self.dialogData = {
                 wifiPassword: null,
+                encryption: self.selectedNetwork.config.encryption,
             }
 
             if( self.selectedNetwork.config.encryption!=='unsecured' ) {
@@ -311,6 +313,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                         this.dialogData = self.dialogData;
                         this.config = self.config;
                         this.selectedNetwork = self.selectedNetwork;
+                        this.encryptions = self.encryptions;
                         this.cancelDialog = self.cancelDialog;
                         this.closeDialog = self.closeDialog;
                     },
@@ -332,7 +335,7 @@ function($rootScope, cleepService, networkService, toast, confirm, $mdDialog) {
                         self.selectedNetwork.interface,
                         self.selectedNetwork.network,
                         self.dialogData.wifiPassword,
-                        self.selectedNetwork.config.encryption
+                        self.dialogData.encryption
                     )
                         .then(function(config) {
                             // update config

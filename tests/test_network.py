@@ -3,10 +3,8 @@
 from cleep.libs.tests import session
 import unittest
 import logging
-import sys
 import copy
 
-sys.path.append("../")
 from backend.network import Network
 from cleep.exception import (
     InvalidParameter,
@@ -211,13 +209,14 @@ class TestNetwork(unittest.TestCase):
     def test_configure_wo_cleepwificonf(self):
         self.init_session(start_module=False)
         self.module.refresh_wifi_networks = Mock()
-        self.module._load_cleep_wifi_conf = Mock()
+        self.module._load_bootstrap_wifi_conf = Mock()
         mock_cleepwificonf.return_value.exists.return_value = False
 
-        self.session.start_module(self.module)
+        with patch("backend.network.os.path.exists", return_value=False):
+            self.session.start_module(self.module)
 
         self.module.refresh_wifi_networks.assert_called()
-        self.assertFalse(self.module._load_cleep_wifi_conf.called)
+        self.assertFalse(self.module._load_bootstrap_wifi_conf.called)
         self.assertFalse(mock_cleepwificonf.return_value.delete.called)
 
         mock_cleepwificonf.return_value.exists.return_value = Mock()
@@ -226,25 +225,57 @@ class TestNetwork(unittest.TestCase):
         self.init_session(start_module=False)
         mock_cleepwificonf.return_value.exists.return_value = True
         self.module.refresh_wifi_networks = Mock()
-        self.module._load_cleep_wifi_conf = Mock()
+        self.module._load_bootstrap_wifi_conf = Mock()
 
-        self.session.start_module(self.module)
+        with patch("backend.network.os.path.exists", return_value=False):
+            self.session.start_module(self.module)
 
         self.module.refresh_wifi_networks.assert_called()
-        self.module._load_cleep_wifi_conf.assert_called()
+        self.module._load_bootstrap_wifi_conf.assert_called()
         mock_cleepwificonf.return_value.delete.assert_called()
 
         mock_cleepwificonf.return_value.exists.return_value = Mock()
+
+    def test_configure_with_cleep_network_json(self):
+        self.init_session(start_module=False)
+        self.module.refresh_wifi_networks = Mock()
+        self.module._load_bootstrap_wifi_conf = Mock()
+        self.module.cleep_filesystem.read_json = Mock(
+            return_value={
+                "network": "mynetwork",
+                "password": "secret",
+                "encryption": "wpa3",
+                "hidden": False,
+            }
+        )
+        self.module.cleep_filesystem.rm = Mock()
+
+        with patch("backend.network.os.path.exists", return_value=True):
+            self.session.start_module(self.module)
+
+        self.module._load_bootstrap_wifi_conf.assert_called_with(
+            {
+                "network": "mynetwork",
+                "password": "secret",
+                "encryption": "wpa3",
+                "hidden": False,
+            },
+            encrypt_password=True,
+            source="cleep-network.json",
+        )
+        self.module.cleep_filesystem.rm.assert_called_with(Network.CLEEP_NETWORK_CONF)
+        self.assertFalse(mock_cleepwificonf.return_value.delete.called)
 
     def test_configure_cleepwificonf_exception(self):
         self.init_session(start_module=False)
         mock_cleepwificonf.return_value.exists.return_value = True
         self.module.refresh_wifi_networks = Mock()
-        self.module._load_cleep_wifi_conf = Mock(
+        self.module._load_bootstrap_wifi_conf = Mock(
             side_effect=Exception("Test exception")
         )
 
-        self.session.start_module(self.module)
+        with patch("backend.network.os.path.exists", return_value=False):
+            self.session.start_module(self.module)
 
         mock_cleepwificonf.return_value.delete.assert_called()
 
@@ -446,11 +477,37 @@ class TestNetwork(unittest.TestCase):
 
         self.assertFalse(self.module.reconfigure_wifi_interface.called)
         self.module.logger.error.assert_called_with(
-            "Unable to use config from cleepwifi.conf"
+            "Unable to use config from %s", "cleepwifi.conf"
         )
 
         mock_wpasupplicantconf.return_value.add_network.return_value = Mock()
         mock_cleepwificonf.return_value.exists.return_value = Mock()
+
+    def test_load_bootstrap_wifi_conf_wpa3_keeps_encryption(self):
+        self.init_session()
+        config = {
+            "network": "network2",
+            "password": "mypassword",
+            "encryption": "wpa3",
+            "hidden": False,
+        }
+        self.module.wifi_networks = copy.deepcopy(self.WIFI_NETWORKS)
+        self.module.reconfigure_wifi_interface = Mock()
+        self.module._add_wifi_network = Mock(return_value=True)
+
+        self.module._load_bootstrap_wifi_conf(
+            config, encrypt_password=True, source="cleep-network.json"
+        )
+
+        self.module._add_wifi_network.assert_called_with(
+            "network2",
+            "wpa3",
+            "mypassword",
+            hidden=False,
+            interface="interface2",
+            encrypt_password=True,
+        )
+        self.module.reconfigure_wifi_interface.assert_called_with("interface2")
 
     def test_get_module_config_from_dhcpcd(self):
         self.init_session()
@@ -1777,9 +1834,35 @@ class TestNetwork(unittest.TestCase):
             "network1",
             mock_wpasupplicantconf.ENCRYPTION_TYPE_WPA2,
             "password",
-            False,
+            hidden=False,
             interface="interface1",
+            encrypt_password=True,
         )
+        mock_wpacli.return_value.reconfigure_interface.assert_called_with("interface1")
+
+    def test_save_wifi_network_wpa3(self):
+        self.init_session()
+        mock_wpasupplicantconf.return_value.get_configuration.return_value = None
+        mock_wpasupplicantconf.return_value.has_config.return_value = True
+        self.module.cleep_filesystem.read_data = Mock(
+            return_value=["ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n"]
+        )
+        self.module.cleep_filesystem.write_data = Mock(return_value=True)
+
+        self.module.save_wifi_network_configuration(
+            "interface1",
+            "network1",
+            Network.ENCRYPTION_TYPE_WPA3,
+            "password",
+            False,
+        )
+
+        self.assertFalse(mock_wpasupplicantconf.return_value.add_network.called)
+        self.module.cleep_filesystem.write_data.assert_called()
+        written = self.module.cleep_filesystem.write_data.call_args[0][1]
+        self.assertIn("key_mgmt=SAE", written)
+        self.assertIn('ssid="network1"', written)
+        self.assertIn('psk="password"', written)
         mock_wpacli.return_value.reconfigure_interface.assert_called_with("interface1")
 
     def test_save_wifi_network_failed(self):
@@ -1938,6 +2021,7 @@ class TestNetwork(unittest.TestCase):
 
     def test_update_wifi_network_password(self):
         self.init_session()
+        self.module._is_wpa3_network = Mock(return_value=False)
 
         self.module.update_wifi_network_password(
             "interface1", "network1", "newpassword"
@@ -1948,8 +2032,35 @@ class TestNetwork(unittest.TestCase):
         )
         mock_wpacli.return_value.reconfigure_interface.assert_called_with("interface1")
 
+    def test_update_wifi_network_password_wpa3(self):
+        self.init_session()
+        self.module._is_wpa3_network = Mock(return_value=True)
+        mock_wpasupplicantconf.return_value.get_configuration.return_value = {
+            "network": "network1",
+            "hidden": False,
+            "encryption": "wpa2",
+        }
+        mock_wpasupplicantconf.return_value.delete_network.return_value = True
+        self.module._add_wpa3_network = Mock(return_value=True)
+
+        self.module.update_wifi_network_password(
+            "interface1", "network1", "newpassword"
+        )
+
+        mock_wpasupplicantconf.return_value.delete_network.assert_called_with(
+            "network1", interface="interface1"
+        )
+        self.module._add_wpa3_network.assert_called_with(
+            "network1", "newpassword", hidden=False, interface="interface1"
+        )
+        self.assertFalse(
+            mock_wpasupplicantconf.return_value.update_network_password.called
+        )
+        mock_wpacli.return_value.reconfigure_interface.assert_called_with("interface1")
+
     def test_update_wifi_network_password_failed(self):
         self.init_session()
+        self.module._is_wpa3_network = Mock(return_value=False)
         mock_wpasupplicantconf.return_value.update_network_password.return_value = False
 
         with self.assertRaises(CommandError) as cm:
